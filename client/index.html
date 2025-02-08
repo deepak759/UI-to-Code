@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <style>
+      #main {
+        padding-top: 0px;
+      }
+      #content {
+        margin-bottom: 0px !important;
+      }
+
+      /* Add these styles to match kr2.html */
+      .fusion-builder-row {
+        max-width: 100vw !important;
+        margin-left: 0px !important;
+        margin-right: 0px !important;
+      }
+
+      .fusion-builder-row-1 {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+      }
+
+      .fusion-page-title-bar {
+        display: none;
+      }
+
+      #main {
+        padding: 0px !important;
+        width: 100% !important;
+      }
+
+      .fusion-column-wrapper {
+        margin: 0px !important;
+      }
+
+      .fusion-layout-column {
+        margin: 0px !important;
+      }
+
+      :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #252525;
+        --accent: #6366f1;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --border: #333333;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+      }
+
+      .main-container {
+        position: relative;
+        background: linear-gradient(
+          -45deg,
+          var(--bg-primary),
+          var(--bg-secondary),
+          #1f1f1f,
+          #2a2a2a
+        );
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+        color: var(--text-primary);
+        min-height: 100%;
+        overflow: hidden;
+      }
+
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .logo {
+        font-size: 4rem;
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: var(--text-secondary);
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+
+      /* Add responsive styles */
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .main-content {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .logo {
+          font-size: 2.5rem;
+        }
+
+        .drop-zone {
+          padding: 2rem;
+        }
+
+        .drop-zone i {
+          font-size: 2rem;
+        }
+
+        .preview-section,
+        .upload-section {
+          padding: 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .tabs {
+          flex-direction: column;
+          border-bottom: none;
+        }
+
+        .tab {
+          width: 100%;
+          text-align: center;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .tab.active {
+          border-bottom: 2px solid var(--accent);
+        }
+      }
+
+      .upload-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: var(--bg-secondary);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+
+      .drop-zone {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+      }
+
+      .drop-zone.dragover {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      .drop-zone i {
+        font-size: 3rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+      }
+
+      .preview-section {
+        background: var(--bg-secondary);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+
+      .format-selector {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .format-selector label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .format-selector select {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .format-selector select:hover {
+        border-color: var(--accent);
+      }
+
+      .format-selector select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      }
+
+      .tabs {
+        display: flex;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+        border-bottom: 2px solid transparent;
+      }
+
+      .tab.active {
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+      }
+
+      .preview-container {
+        background: var(--bg-primary);
+        border-radius: 8px;
+        min-height: 400px;
+        padding: 1rem;
+        overflow: auto;
+      }
+
+      .code-container {
+        display: none;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        min-height: 400px;
+        padding: 1rem;
+        font-family: "Fira Code", monospace;
+        white-space: pre-wrap;
+      }
+
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .loading-spinner {
+        border: 3px solid var(--border);
+        border-top: 3px solid var(--accent);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .background-animation {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .shape {
+        position: absolute;
+        background: var(--accent);
+        border-radius: 50%;
+        opacity: 1;
+        filter: blur(2px);
+        width: 4px;
+        height: 4px;
+        transition: transform 0.2s ease;
+      }
+
+      /* Faster animations for all shapes */
+      .shape:nth-child(1) {
+        width: 6px;
+        height: 6px;
+        top: 15%;
+        left: 25%;
+        animation: float 8s infinite 1s;
+      }
+      .shape:nth-child(2) {
+        width: 4px;
+        height: 4px;
+        top: 45%;
+        left: 45%;
+        animation: float 6s infinite 0s reverse;
+      }
+      .shape:nth-child(3) {
+        width: 8px;
+        height: 8px;
+        top: 75%;
+        left: 15%;
+        animation: float 10s infinite 2s;
+      }
+      .shape:nth-child(4) {
+        width: 5px;
+        height: 5px;
+        top: 25%;
+        left: 85%;
+        animation: float 7s infinite 0.5s reverse;
+      }
+      .shape:nth-child(5) {
+        width: 7px;
+        height: 7px;
+        top: 85%;
+        left: 65%;
+        animation: float 9s infinite 1.5s;
+      }
+      .shape:nth-child(6) {
+        width: 4px;
+        height: 4px;
+        top: 35%;
+        left: 35%;
+        animation: float 8s infinite 0.5s reverse;
+      }
+      .shape:nth-child(7) {
+        width: 6px;
+        height: 6px;
+        top: 65%;
+        left: 75%;
+        animation: float 8s infinite 1s;
+      }
+      .shape:nth-child(8) {
+        width: 5px;
+        height: 5px;
+        top: 55%;
+        left: 5%;
+        animation: float 7s infinite 0.25s reverse;
+      }
+      .shape:nth-child(9) {
+        width: 7px;
+        height: 7px;
+        top: 5%;
+        left: 55%;
+        animation: float 8s infinite 1.25s;
+      }
+      .shape:nth-child(10) {
+        width: 4px;
+        height: 4px;
+        top: 95%;
+        left: 95%;
+        animation: float 8s infinite 0.25s reverse;
+      }
+      .shape:nth-child(11) {
+        width: 6px;
+        height: 6px;
+        top: 25%;
+        left: 65%;
+        animation: float 8s infinite 1.75s;
+      }
+      .shape:nth-child(12) {
+        width: 5px;
+        height: 5px;
+        top: 75%;
+        left: 35%;
+        animation: float 6s infinite 0.75s reverse;
+      }
+      .shape:nth-child(13) {
+        width: 8px;
+        height: 8px;
+        top: 45%;
+        left: 85%;
+        animation: float 10s infinite 0.5s;
+      }
+      .shape:nth-child(14) {
+        width: 4px;
+        height: 4px;
+        top: 15%;
+        left: 15%;
+        animation: float 8s infinite 1.5s reverse;
+      }
+      .shape:nth-child(15) {
+        width: 7px;
+        height: 7px;
+        top: 85%;
+        left: 45%;
+        animation: float 10s infinite 3s;
+      }
+      .shape:nth-child(16) {
+        width: 5px;
+        height: 5px;
+        top: 35%;
+        left: 95%;
+        animation: float 8s infinite 0.25s reverse;
+      }
+      .shape:nth-child(17) {
+        width: 6px;
+        height: 6px;
+        top: 55%;
+        left: 25%;
+        animation: float 8s infinite 1s;
+      }
+      .shape:nth-child(18) {
+        width: 4px;
+        height: 4px;
+        top: 95%;
+        left: 75%;
+        animation: float 7s infinite 0.75s reverse;
+      }
+      .shape:nth-child(19) {
+        width: 7px;
+        height: 7px;
+        top: 5%;
+        left: 85%;
+        animation: float 8s infinite 1.75s;
+      }
+      .shape:nth-child(20) {
+        width: 5px;
+        height: 5px;
+        top: 65%;
+        left: 55%;
+        animation: float 8s infinite 0.5s reverse;
+      }
+      .shape:nth-child(21) {
+        width: 6px;
+        height: 6px;
+        top: 75%;
+        left: 5%;
+        animation: float 8s infinite 0.25s;
+      }
+      .shape:nth-child(22) {
+        width: 4px;
+        height: 4px;
+        top: 25%;
+        left: 45%;
+        animation: float 6s infinite 0.75s reverse;
+      }
+      .shape:nth-child(23) {
+        width: 8px;
+        height: 8px;
+        top: 45%;
+        left: 65%;
+        animation: float 8s infinite 1.75s;
+      }
+      .shape:nth-child(24) {
+        width: 5px;
+        height: 5px;
+        top: 85%;
+        left: 35%;
+        animation: float 7s infinite 0.5s reverse;
+      }
+      .shape:nth-child(25) {
+        width: 7px;
+        height: 7px;
+        top: 15%;
+        left: 75%;
+        animation: float 8s infinite 1.25s;
+      }
+      .shape:nth-child(26) {
+        width: 4px;
+        height: 4px;
+        top: 55%;
+        left: 15%;
+        animation: float 8s infinite 2s reverse;
+      }
+      .shape:nth-child(27) {
+        width: 6px;
+        height: 6px;
+        top: 35%;
+        left: 85%;
+        animation: float 6s infinite 0.5s;
+      }
+      .shape:nth-child(28) {
+        width: 5px;
+        height: 5px;
+        top: 95%;
+        left: 55%;
+        animation: float 8s infinite 0.75s reverse;
+      }
+      .shape:nth-child(29) {
+        width: 7px;
+        height: 7px;
+        top: 5%;
+        left: 25%;
+        animation: float 7s infinite 1.5s;
+      }
+      .shape:nth-child(30) {
+        width: 4px;
+        height: 4px;
+        top: 65%;
+        left: 95%;
+        animation: float 8s infinite 0.5s reverse;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        33% {
+          transform: translate(50px, 50px) rotate(120deg);
+        }
+        66% {
+          transform: translate(-25px, 100px) rotate(240deg);
+        }
+        100% {
+          transform: translate(0, 0) rotate(360deg);
+        }
+      }
+
+      .new-tab-btn {
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid var(--accent);
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+
+      .new-tab-btn:hover {
+        background: var(--accent);
+      }
+
+      .generate-btn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .generate-btn:not(:disabled) {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      .upload-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 1rem 0;
+      }
+
+      .file-name {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+    </style>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <div class="main-container">
+      <div class="background-animation" id="backgroundAnimation">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+      </div>
+      <div class="container">
+        <header>
+          <div class="logo">Vision UI Generator</div>
+          <p class="subtitle">
+            Transform your images into pixel-perfect HTML & CSS code
+          </p>
+        </header>
+
+        <div class="main-content">
+          <form id="uploadForm" onsubmit="return false;">
+            <div class="upload-section">
+              <div class="drop-zone" id="dropZone">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & Drop your image here or</p>
+                <input
+                  type="file"
+                  id="fileInput"
+                  accept="image/*"
+                  style="display: none"
+                />
+                <button
+                  type="button"
+                  onclick="event.preventDefault(); document.getElementById('fileInput').click();"
+                  class="upload-btn"
+                >
+                  Choose File
+                </button>
+                <p id="fileName" class="file-name"></p>
+              </div>
+              <button
+                type="button"
+                id="generateBtn"
+                class="generate-btn"
+                disabled
+              >
+                Generate UI
+              </button>
+              <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Generating code...</p>
+              </div>
+            </div>
+          </form>
+
+          <div class="preview-section">
+            <div class="format-selector">
+              <label for="formatSelect">Output Format:</label>
+              <select id="formatSelect">
+                <option value="html-css">HTML + CSS</option>
+                <option value="html-tailwind">HTML + Tailwind</option>
+              </select>
+            </div>
+            <div class="tabs">
+              <div class="tab active" data-tab="preview">Preview</div>
+              <div class="tab" data-tab="code">Code</div>
+              <button
+                id="openInNewTab"
+                class="new-tab-btn"
+                style="display: none"
+              >
+                <i class="fas fa-external-link-alt"></i> Open in New Tab
+              </button>
+            </div>
+            <div class="preview-container" id="previewContainer"></div>
+            <div class="code-container" id="codeContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const generateBtn = document.getElementById("generateBtn");
+          const loading = document.getElementById("loading");
+          const previewContainer = document.getElementById("previewContainer");
+          const codeContainer = document.getElementById("codeContainer");
+          const tabs = document.querySelectorAll(".tab");
+          const openInNewTabBtn = document.getElementById("openInNewTab");
+          const dropZone = document.getElementById("dropZone");
+          const fileInput = document.getElementById("fileInput");
+          const fileName = document.getElementById("fileName");
+          let generatedHTML = "";
+          let selectedFile = null;
+
+          const uploadForm = document.getElementById("uploadForm");
+
+          // Prevent form submission
+          uploadForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          });
+
+          // Modified file input handler
+          fileInput.addEventListener("change", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const file = e.target.files[0];
+            if (file) {
+              handleFileSelection(file);
+            }
+          });
+
+          function handleFileSelection(file) {
+            if (file.type.startsWith("image/")) {
+              selectedFile = file;
+              fileName.textContent = file.name;
+              generateBtn.disabled = false;
+            } else {
+              alert("Please upload an image file");
+              selectedFile = null;
+              fileName.textContent = "";
+              generateBtn.disabled = true;
+            }
+          }
+
+          // Modified generate button handler
+          generateBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (selectedFile) {
+              handleGenerate();
+            }
+          });
+
+          // Handle tab switching
+          tabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+              tabs.forEach((t) => t.classList.remove("active"));
+              tab.classList.add("active");
+
+              if (tab.dataset.tab === "preview") {
+                previewContainer.style.display = "block";
+                codeContainer.style.display = "none";
+              } else {
+                previewContainer.style.display = "none";
+                codeContainer.style.display = "block";
+              }
+            });
+          });
+
+          // Handle opening preview in new tab
+          openInNewTabBtn.addEventListener("click", () => {
+            const newWindow = window.open();
+            newWindow.document.write(generatedHTML);
+            newWindow.document.close();
+          });
+
+          async function handleGenerate() {
+            try {
+              // Show loading state
+              generateBtn.style.display = "none";
+              loading.style.display = "block";
+
+              const formData = new FormData();
+              formData.append("image", selectedFile);
+              formData.append(
+                "formatType",
+                document.getElementById("formatSelect").value
+              );
+
+              const response = await fetch(
+                "http://localhost:3000/api/generate",
+                {
+                  method: "POST",
+                  body: formData,
+                  headers: {
+                    Accept: "application/json",
+                  },
+                }
+              );
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                  errorData.error || `HTTP error! status: ${response.status}`
+                );
+              }
+
+              const data = await response.json();
+
+              if (!data.response) {
+                throw new Error(
+                  'Server response missing required "response" field'
+                );
+              }
+
+              // Extract the HTML content from the response
+              const htmlMatch = data.response.match(/```html\n([\s\S]*?)\n```/);
+              if (!htmlMatch) {
+                throw new Error("Could not find HTML content in response");
+              }
+
+              // Store the generated HTML
+              generatedHTML = htmlMatch[1];
+
+              // Display the generated code
+              codeContainer.textContent = generatedHTML;
+
+              // Display the preview
+              previewContainer.innerHTML = generatedHTML;
+
+              // Show the "Open in New Tab" button
+              openInNewTabBtn.style.display = "block";
+            } catch (error) {
+              console.error("Error during generation:", error);
+              alert(`Generation failed: ${error.message}`);
+            } finally {
+              // Hide loading state and reset UI
+              loading.style.display = "none";
+              generateBtn.style.display = "block";
+            }
+          }
+
+          // Handle drag and drop
+          dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add("dragover");
+          });
+
+          dropZone.addEventListener("dragleave", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove("dragover");
+          });
+
+          dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove("dragover");
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("image/")) {
+              handleFileSelection(file);
+            } else {
+              alert("Please upload an image file");
+            }
+          });
+
+          // Add mouse interaction for background shapes
+          const backgroundAnimation = document.getElementById(
+            "backgroundAnimation"
+          );
+          const shapes = document.querySelectorAll(".shape");
+
+          document.addEventListener("mousemove", (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            const radius = 150; // Increased detection radius
+
+            shapes.forEach((shape) => {
+              const rect = shape.getBoundingClientRect();
+              const shapeX = rect.left + rect.width / 2;
+              const shapeY = rect.top + rect.height / 2;
+
+              const dx = mouseX - shapeX;
+              const dy = mouseY - shapeY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance < radius) {
+                const force = (1 - distance / radius) * 50; // Increased force
+                const angle = Math.atan2(dy, dx);
+
+                const moveX = -Math.cos(angle) * force;
+                const moveY = -Math.sin(angle) * force;
+
+                shape.style.transform = `translate(${moveX}px, ${moveY}px)`;
+              } else {
+                shape.style.transform = "";
+              }
+            });
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

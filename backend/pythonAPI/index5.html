@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exclusive - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #34383E;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            background-color: #CDE3E9;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #CD4A49;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #34383E;
+            font-size: 0.9rem;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 20px;
+        }
+
+        .search-bar input {
+            border: none;
+            outline: none;
+            margin-left: 0.5rem;
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .phone-mockup {
+            flex: 1;
+            background: url('phone-placeholder.png') center/contain no-repeat;
+            min-height: 500px;
+        }
+
+        .login-form {
+            flex: 1;
+            background: #CDE3E9;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+
+        .login-form h2 {
+            color: #CD4A49;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34383E;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #34383E;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .login-btn {
+            background: #CD4A49;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 1rem;
+        }
+
+        .forgot-password a {
+            color: #34383E;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Exclusive</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Contact</a>
+            <a href="#">About</a>
+            <div class="search-bar">
+                <input type="text" placeholder="What are you looking for?">
+                <span>Q</span>
+            </div>
+            <a href="#" style="color: #CD4A49;">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="phone-mockup"></div>
+        <div class="login-form">
+            <h2>Log in to Exclusive</h2>
+            <form>
+                <div class="form-group">
+                    <label>Email or Phone Number</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password">
+                </div>
+                <button type="submit" class="login-btn">Log In</button>
+                <div class="forgot-password">
+                    <a href="#">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

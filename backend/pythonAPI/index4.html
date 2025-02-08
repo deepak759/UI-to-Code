@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(124,59,238,0.1) 0%, rgba(223,155,197,0.3) 100%);
+            margin: 0;
+        }
+        .login-card {
+            background: #fdfdfd;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(124, 59, 238, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .welcome-text {
+            color: #7c3bee;
+            margin-bottom: 2rem;
+            font-size: 2.2em;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #7c3bee;
+        }
+        .login-button {
+            background-color: #7c3bee;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .login-button:hover {
+            background-color: #6a2ed6;
+        }
+        .signup-text {
+            text-align: center;
+            color: #666;
+            margin-top: 1rem;
+        }
+        .signup-link {
+            color: #7c3bee;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .signup-link:hover {
+            color: #6a2ed6;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1 class="welcome-text">Welcome</h1>
+        <form class="login-form">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-input" placeholder="Enter your username">
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-input" placeholder="Enter your password">
+            </div>
+            <button type="submit" class="login-button">Login</button>
+            <p class="signup-text">
+                Don't have an account? <a href="#signup" class="signup-link">Create an account</a>
+            </p>
+        </form>
+    </div>
+</body>
+</html>

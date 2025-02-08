@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albert Flores - Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2d2d2d;
+            --secondary-color: #4a4a4a;
+            --accent-color: #007bff;
+            --text-color: #333;
+        }
+
+        .portfolio-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin: 80px 0;
+        }
+
+        .profile-image .image-placeholder {
+            width: 100%;
+            height: 400px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .title {
+            font-size: 3rem;
+            margin: 20px 0;
+            color: var(--primary-color);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+        }
+
+        .role {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            margin-bottom: 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .primary-btn, .secondary-btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .primary-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .experience {
+            margin: 100px 0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 50px;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .experience-item {
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .company {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .duration {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .cta-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="portfolio-container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="brand">Albert</div>
+            <div class="nav-links">
+                <a href="#services">Services</a>
+                <a href="#case-studies">Case studies</a>
+                <a href="#about">About me</a>
+                <a href="#contact">Contact us</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="subtitle">Passionate about creating great experiences for Digital Product</h2>
+                <h1 class="title">I'm Albert Flores</h1>
+                <h2 class="role">Digital Product Designer based in Tegal, Indonesia</h2>
+                <div class="cta-buttons">
+                    <button class="primary-btn">Talk with me</button>
+                    <button class="secondary-btn">See my work</button>
+                </div>
+            </div>
+            <div class="profile-image">
+                <div class="image-placeholder"></div>
+            </div>
+        </section>
+
+        <!-- Experience Section -->
+        <section class="experience">
+            <h3 class="section-title">Working experience</h3>
+            <div class="timeline">
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <h4>Part time Product design</h4>
+                        <span class="company">Berbaurnesia</span>
+                    </div>
+                    <p class="duration">Feb 2020 - Present</p>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <h4>Senior Product design</h4>
+                        <span class="company">Berkendara</span>
+                    </div>
+                    <p class="duration">Feb 2020 - Feb 2023</p>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <h4>Product design</h4>
+                        <span class="company">Cukurkuy</span>
+                    </div>
+                    <p class="duration">Feb 2018 - Feb 2020</p>
+                </div>
+            </div>
+            <button class="secondary-btn">See my work</button>
+        </section>
+    </div>
+</body>
+</html>
