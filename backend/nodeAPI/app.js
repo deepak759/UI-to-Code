@@ -108,9 +108,9 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     }
 
     // Clean up uploaded file if it exists
-    // if (uploadedImage) {
-    //   await fs.unlink(uploadedImage.path).catch(console.error);
-    // }
+    if (uploadedImage) {
+      await fs.unlink(uploadedImage.path).catch(console.error);
+    }
     console.log(response);
     res.json({ response });
   } catch (error) {
