@@ -3,459 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trello Board</title>
+    <title>Image Upload</title>
     <style>
         body {
-            font-family: sans-serif;
-            margin: 0;
-            background: linear-gradient(to bottom right, #a8e6cf, #dcedc1, #ffaaa5, #ff8b94);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4; /* Light gray background */
         }
 
         .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 20px auto;
             background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ensure content stays within the rounded corners */
-            padding-bottom: 20px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%; /* Adjust as needed */
+            max-width: 500px; /* Max width for larger screens */
         }
 
-        /* Header */
-        .header {
-            background-color: #5ba4cf;
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            border-radius: 10px 10px 0 0;
-            margin-bottom: 20px;
-        }
-
-        .header > * {
-            margin-right: 15px;
-        }
-
-        .menu-icon {
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .trello-logo {
-            font-weight: bold;
-            font-size: 20px;
-        }
-
-        .header-buttons {
-            display: flex;
-        }
-
-        .header-buttons button, .header-buttons select {
-            background-color: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-right: 5px;
-        }
-
-        .header-buttons button:hover, .header-buttons select:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .search-bar {
-            margin-left: auto;
-            padding: 5px 10px;
-            border-radius: 5px;
-            border: none;
-        }
-
-        .user-icon {
-            margin-left: 10px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: lightblue;
-        }
-
-        /* Board Navigation */
-        .board-nav {
-            background-color: #e6f2ff;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .board-nav > * {
-            margin-right: 15px;
-        }
-
-        .board-nav-button {
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
+        h2 {
             color: #333;
+            margin-bottom: 20px;
         }
 
-        .team-board-name {
-            font-weight: bold;
-        }
-
-        .invite-button {
-            background-color: #5ba4cf;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: auto;
-        }
-
-        /* Columns */
-        .board-columns {
-            display: flex;
-            justify-content: flex-start; /* Align columns to the left */
-            padding: 0 20px;
-            overflow-x: auto; /* Enable horizontal scrolling on smaller screens */
-        }
-
-        .column {
-            background-color: #f4f5f7;
-            border-radius: 5px;
-            margin-right: 20px; /* Add spacing between columns */
-            width: 300px; /* Adjust width as needed */
-            min-width: 300px; /* Ensure columns don't shrink below this size */
-            flex-shrink: 0; /* Prevent columns from shrinking */
-        }
-
-        .column:last-child {
-            margin-right: 0; /* Remove margin from the last column */
-        }
-
-        .column-header {
+        input[type="file"] {
+            margin-bottom: 20px;
             padding: 10px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card {
-            background-color: #fff;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            padding: 10px;
-            margin: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
-        .card-title {
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .card-details {
-            color: #666;
-            font-size: 12px;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-more-options {
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
 
-        .card-details {
-            margin-top: 10px;
+        button:hover {
+            background-color: #0056b3;
         }
 
-        .card-details ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        #preview {
+            margin-top: 20px;
+            max-width: 100%; /* Ensure image doesn't exceed container width */
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: none;
         }
 
-        .card-details li {
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-        }
-
-        .card-details li i {
-            margin-right: 5px;
-        }
-
-        .card-color-indicator {
-            width: 20px;
-            height: 5px;
-            border-radius: 3px;
-            margin-right: 5px;
-            display: inline-block;
-        }
-
-         .card-member-icons {
-            display: flex;
-            align-items: center;
-        }
-
-        .member-icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: #ccc;
-            margin-left: -5px;
-            border: 1px solid #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            font-size: 10px;
-        }
-
-        .member-icon:first-child {
-            margin-left: 0;
-        }
-
-        .column-add-card {
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-            }
-
-            .board-columns {
-                flex-direction: column;
-            }
-
-            .column {
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
+        #responseText {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
-
-        <!-- Header -->
-        <div class="header">
-            <i class="menu-icon">&#9776;</i>
-            <span class="trello-logo">Trello</span>
-            <div class="header-buttons">
-                <button>Workspaces</button>
-                <button>Recent</button>
-                <button>Starred</button>
-                <button>Create</button>
-            </div>
-            <input type="text" class="search-bar" placeholder="Search">
-            <i class="user-icon"></i>
-        </div>
-
-        <!-- Board Navigation -->
-        <div class="board-nav">
-            <i class="menu-icon">&gt;</i>
-            <button class="board-nav-button">Board</button>
-            <span class="team-board-name">Team board</span>
-            <i class="user-icon">&#9734;</i>
-            <span class="team-board-name">Acme, Inc.</span>
-            <i class="user-icon"></i>
-            <i class="user-icon"></i>
-            <i class="user-icon"></i>
-            <span>+3</span>
-            <button class="invite-button">Invite</button>
-        </div>
-
-        <!-- Columns -->
-        <div class="board-columns">
-
-            <!-- To do -->
-            <div class="column">
-                <div class="column-header">
-                    To do
-                    <i class="card-more-options">&#8942;</i>
-                </div>
-                <div class="card">
-                     <img src="https://placehold.co/260x100" alt="Placeholder" style="width:100%; height:auto;">
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                <i class="fas fa-bars"></i> 5
-                                <i class="fas fa-comment"></i> 3
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                 <div class="card">
-                     <span class="card-color-indicator" style="background-color: #ffeb3b;"></span>
-
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 2
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="column-add-card">+ Add a card</div>
-            </div>
-
-            <!-- Doing -->
-            <div class="column">
-                <div class="column-header">
-                    Doing
-                    <i class="card-more-options">&#8942;</i>
-                </div>
-                <div class="card">
-                      <span class="card-color-indicator" style="background-color: #2196f3;"></span>
-                    <div class="card-details">
-                        <ul>
-                            <li>
-                                <i class="fas fa-bars"></i> 2/3
-                                <i class="fas fa-comment"></i> 4
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card">
-                     <span class="card-color-indicator" style="background-color: #9c27b0;"></span>
-
-
-                </div>
-
-                <div class="card">
-                     <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 4
-                                 <i class="far fa-clock"></i> July 15
-                                <i class="user-icon"></i>
-
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                 <div class="card">
-                       <span class="card-color-indicator" style="background-color: #00bcd4;"></span>
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 2
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                 <div class="card">
-                       <span class="card-color-indicator" style="background-color: #e91e63;"></span>
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 4
-                                 <i class="fas fa-comment"></i> 4
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="column-add-card">+ Add a card</div>
-            </div>
-
-            <!-- Done -->
-            <div class="column">
-                <div class="column-header">
-                    Done
-                    <i class="card-more-options">&#8942;</i>
-                </div>
-                 <div class="card">
-                     <span class="card-color-indicator" style="background-color: #e91e63;"></span>
-                      <span class="card-color-indicator" style="background-color: #00bcd4;"></span>
-
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 1
-                                 <input type="checkbox" checked> 2/2
-                                  <span style="background-color: #4caf50; padding: 3px 5px; border-radius: 3px; color: #fff;">Jun 6</span>
-                                <i class="user-icon"></i>
-
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                   <div class="card">
-                        <span class="card-color-indicator" style="background-color: #e91e63;"></span>
-
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 4
-                                 <span style="background-color: #4caf50; padding: 3px 5px; border-radius: 3px; color: #fff;">Jun 12</span>
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                   <div class="card">
-                    <div class="card-details">
-                        <ul>
-
-                            <li>
-                                 <i class="fas fa-paperclip"></i> 2
-                                 <input type="checkbox" checked> 4/4
-
-                                <i class="user-icon"></i>
-                                <i class="user-icon"></i>
-
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="column-add-card">+ Add a card</div>
-            </div>
-
-        </div>
-
+        <h2>Upload an Image</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <button onclick="uploadImage()">Upload</button>
+        <img id="preview" style="display:none;" />
+        <p id="responseText"></p>
     </div>
 
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+        function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select an image");
+                return;
+            }
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const previewImage = document.getElementById('preview');
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block'; // Show the image
+            }
+            reader.readAsDataURL(file);
+
+
+
+            // Here you would add the API call to upload the image
+            // For demonstration, let's just simulate a response:
+            setTimeout(() => {
+                const responseText = document.getElementById('responseText');
+                responseText.textContent = "Image uploaded successfully!";
+            }, 1500);  // Simulate 1.5 seconds API delay
+        }
+    </script>
 </body>
 </html>
