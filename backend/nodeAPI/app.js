@@ -130,20 +130,30 @@ Please modify the code according to the user's request and the conversation hist
       await fs.unlink(req.file.path).catch(console.error);
     }
 
-    // Process the response to replace image URLs with Pexels images
-    if (response.includes('src="')) {
-      // Find all image sources in the response
+    // Process the response to replace both src and background-image URLs
+    if (response.includes('src="') || response.includes("background-image")) {
+      // Replace src attributes
       const imgRegex = /src="([^"]+)"/g;
       const matches = [...response.matchAll(imgRegex)];
 
-      // Replace each image source with a Pexels image
       for (const match of matches) {
         const originalSrc = match[1];
-        // Extract meaningful keywords from the original src or use a default
         const searchQuery =
           originalSrc.split("/").pop().split(".")[0] || "placeholder";
         const pexelsUrl = await getPexelsImageUrl(searchQuery);
         response = response.replace(originalSrc, pexelsUrl);
+      }
+
+      // Replace background-image URLs
+      const bgRegex = /background-image:\s*url\(['"]([^'"]+)['"]\)/g;
+      const bgMatches = [...response.matchAll(bgRegex)];
+
+      for (const match of bgMatches) {
+        const originalUrl = match[1];
+        const searchQuery =
+          originalUrl.split("/").pop().split(".")[0] || "background";
+        const pexelsUrl = await getPexelsImageUrl(searchQuery);
+        response = response.replace(originalUrl, pexelsUrl);
       }
     }
 
