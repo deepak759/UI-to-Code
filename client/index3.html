@@ -383,7 +383,7 @@
             messageElement.innerHTML = `
               <div class="flex flex-col space-y-2">
                 <div class="flex justify-end">
-                  <div class="bg-blue-600 text-white rounded-lg py-2 px-4 max-w-[80%]">
+                  <div class="bg-blue-600 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user">
                     <p class="text-sm">${message}</p>
                   </div>
                 </div>
@@ -401,10 +401,34 @@
             messageInput.value = "";
 
             try {
-              // Initialize history array with the current code if it exists
-              const historyMessages = [];
+              // Collect all messages from chat history
+              const historyMessages = Array.from(historyDiv.children)
+                .map((el) => {
+                  const userMsg = el.querySelector(
+                    '[data-role="user"] .text-sm'
+                  )?.textContent;
+                  const aiMsg = el.querySelector(
+                    '[data-role="assistant"] .text-sm'
+                  )?.textContent;
+                  const messages = [];
 
-              // Add the current code as the most recent AI response
+                  if (userMsg) {
+                    messages.push({
+                      role: "user",
+                      content: userMsg,
+                    });
+                  }
+                  if (aiMsg && !aiMsg.includes("Thinking...")) {
+                    messages.push({
+                      role: "assistant",
+                      content: aiMsg,
+                    });
+                  }
+                  return messages;
+                })
+                .flat();
+
+              // Add the current code if it exists
               if (currentCode) {
                 historyMessages.push({
                   role: "assistant",
@@ -417,6 +441,8 @@
                 role: "user",
                 content: message,
               });
+
+              console.log("Sending history:", historyMessages); // Debug log
 
               // Make API request
               const response = await fetch(
@@ -475,7 +501,7 @@
                       "#ai-response-loading"
                     );
                     loadingResponse.innerHTML = `
-                      <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                      <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]" data-role="assistant">
                         <p class="text-sm">I've updated the code with your changes! You can see it in the output section.</p>
                       </div>
                     `;
@@ -486,7 +512,7 @@
                     "#ai-response-loading"
                   );
                   loadingResponse.innerHTML = `
-                    <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                    <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]" data-role="assistant">
                       <p class="text-sm">${data.response}</p>
                     </div>
                   `;

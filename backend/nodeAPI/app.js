@@ -71,26 +71,41 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     }
     // Case 2: Text message with history (code modification request)
     else if (!req.file && conversationHistory.length > 0) {
-      const previousCode = conversationHistory[0].content; // Get the previous code
-      prompt = `Here is the current HTML code:
+      // Find the last code response in history
+      const lastCode = conversationHistory
+        .filter(
+          (msg) =>
+            msg.role === "assistant" &&
+            (msg.content.includes("<html") ||
+              msg.content.includes("<!DOCTYPE") ||
+              msg.content.includes("<body"))
+        )
+        .pop()?.content;
 
-${previousCode}
+      // Format the conversation history for context
+      const conversationContext = conversationHistory
+        .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
+        .join("\n\n");
 
-User request: "${userMessage}"
+      prompt = `Previous conversation and code context:
+${conversationContext}
 
-Please modify the code according to the user's request and provide the complete updated code. Return only the modified code wrapped in \`\`\`html code blocks.`;
+Current code to modify:
+${lastCode || "No previous code found"}
+
+User's new request: "${userMessage}"
+
+Please modify the code according to the user's request and the conversation history. Return the complete updated code wrapped in \`\`\`html code blocks. Make sure to maintain all existing functionality while implementing the requested changes.`;
     }
-    // Case 3: New image upload (with or without history)
+    // Case 3: New image upload (with history)
     else if (req.file) {
       prompt =
         "Create new responsive HTML and CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
     } else {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Invalid request. Please provide an image or a modification request with history.",
-        });
+      return res.status(400).json({
+        error:
+          "Invalid request. Please provide an image or a modification request with history.",
+      });
     }
 
     let parts = [prompt];
@@ -113,6 +128,32 @@ Please modify the code according to the user's request and provide the complete 
     // Clean up uploaded file if it exists
     if (req.file) {
       await fs.unlink(req.file.path).catch(console.error);
+    }
+
+    // Process the response to replace image URLs with Pexels images
+    if (response.includes('src="')) {
+      // Find all image sources in the response
+      const imgRegex = /src="([^"]+)"/g;
+      const matches = [...response.matchAll(imgRegex)];
+
+      // Replace each image source with a Pexels image
+      for (const match of matches) {
+        const originalSrc = match[1];
+        // Extract meaningful keywords from the original src or use a default
+        const searchQuery =
+          originalSrc.split("/").pop().split(".")[0] || "placeholder";
+        const pexelsUrl = await getPexelsImageUrl(searchQuery);
+        response = response.replace(originalSrc, pexelsUrl);
+      }
+    }
+
+    // For Case 2, ensure the response contains code blocks
+    if (
+      !req.file &&
+      conversationHistory.length > 0 &&
+      !response.includes("```html")
+    ) {
+      response = "```html\n" + response + "\n```";
     }
 
     res.json({
