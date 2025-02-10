@@ -4,8 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <!-- Add Prism.js CSS and JS -->
   </head>
   <body>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
     <style>
       #messageInput {
         border-radius: 10px !important;
@@ -44,6 +51,20 @@
 
       .fusion-layout-column {
         margin: 0px !important;
+      }
+
+      /* Add these styles for better code display */
+      pre {
+        background: #1f2937 !important;
+        border-radius: 0.5rem;
+        padding: 1rem !important;
+        margin: 0 !important;
+      }
+
+      code {
+        font-family: "Fira Code", monospace !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
       }
     </style>
     <div class="bg-gray-900">
@@ -266,8 +287,10 @@
                   /```html\n([\s\S]*?)\n```/
                 )[1];
 
-                // Update code view
+                // Update code view with syntax highlighting
                 codeElement.textContent = htmlCode;
+                codeElement.className = "language-html";
+                Prism.highlightElement(codeElement);
 
                 // Update preview iframe
                 const iframe = document.createElement("iframe");
