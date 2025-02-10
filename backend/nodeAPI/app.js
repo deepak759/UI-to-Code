@@ -57,62 +57,68 @@ async function getPexelsImageUrl(query) {
 
 app.post("/api/generate", upload.single("image"), async (req, res) => {
   try {
-    const formatType = req.body.formatType || "css"; // Get format type from request, default to CSS
+    const userMessage = req.body.message || "";
+    const conversationHistory = req.body.history
+      ? JSON.parse(req.body.history)
+      : [];
 
-    const prompt =
-      "Create responsive HTML and CSS code that matches this UI and in place of images use random links. Include all necessary styling and layout. Implement all functionality as well.";
+    let prompt;
 
-    const uploadedImage = req.file;
-    const useTestImage = req.query.useTestImage === "true"; // New query parameter
-
-    // Read the uploaded image or use ui.png if specified or no upload
-    let imageBuffer;
-    if (uploadedImage && !useTestImage) {
-      imageBuffer = await fs.readFile(uploadedImage.path);
-    } else {
-      imageBuffer = await fs.readFile(path.join(__dirname, "ui.png"));
+    // Case 1: Initial image upload (no history)
+    if (req.file && conversationHistory.length === 0) {
+      prompt =
+        "Create responsive HTML and CSS code that matches this UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
     }
-    const imageBase64 = imageBuffer.toString("base64");
+    // Case 2: Text message with history (code modification request)
+    else if (!req.file && conversationHistory.length > 0) {
+      const previousCode = conversationHistory[0].content; // Get the previous code
+      prompt = `Here is the current HTML code:
 
-    const result = await model.generateContent([
-      prompt,
-      {
+${previousCode}
+
+User request: "${userMessage}"
+
+Please modify the code according to the user's request and provide the complete updated code. Return only the modified code wrapped in \`\`\`html code blocks.`;
+    }
+    // Case 3: New image upload (with or without history)
+    else if (req.file) {
+      prompt =
+        "Create new responsive HTML and CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
+    } else {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Invalid request. Please provide an image or a modification request with history.",
+        });
+    }
+
+    let parts = [prompt];
+
+    // Add image to parts if available (Case 1 and 3)
+    if (req.file) {
+      const imageBuffer = await fs.readFile(req.file.path);
+      const imageBase64 = imageBuffer.toString("base64");
+      parts.push({
         inlineData: {
-          mimeType: uploadedImage ? uploadedImage.mimetype : "image/png",
+          mimeType: req.file.mimetype,
           data: imageBase64,
         },
-      },
-    ]);
+      });
+    }
 
+    const result = await model.generateContent(parts);
     let response = await result.response.text();
 
-    // Find all img tags in the response and replace src with Pexels images
-    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/g;
-    const imgTags = response.match(imgRegex) || [];
-
-    // Replace each image source with a Pexels image
-    for (const imgTag of imgTags) {
-      try {
-        const altMatch = imgTag.match(/alt=["']([^"']+)["']/);
-        const searchQuery = altMatch ? altMatch[1] : "abstract";
-        const pexelsUrl = await getPexelsImageUrl(searchQuery);
-        const newImgTag = imgTag.replace(
-          /src=["'][^"']+["']/,
-          `src="${pexelsUrl}"`
-        );
-        response = response.replace(imgTag, newImgTag);
-      } catch (error) {
-        console.error("Error replacing image:", error);
-        continue;
-      }
-    }
-
     // Clean up uploaded file if it exists
-    if (uploadedImage) {
-      await fs.unlink(uploadedImage.path).catch(console.error);
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(console.error);
     }
-    console.log(response);
-    res.json({ response });
+
+    res.json({
+      response,
+      case: req.file ? (conversationHistory.length === 0 ? 1 : 3) : 2,
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Failed to generate content" });
