@@ -88,14 +88,9 @@
 
           <div
             class="border-2 border-dashed border-gray-600/50 rounded-xl p-10 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
+            id="uploadContainer"
           >
             <input type="file" id="fileInput" class="hidden" accept="image/*" />
-            <div id="previewContainer" class="hidden mb-6">
-              <img
-                id="imagePreview"
-                class="mx-auto h-56 object-contain rounded-lg shadow-xl"
-              />
-            </div>
             <label
               for="fileInput"
               class="cursor-pointer block group-hover:scale-105 transition-transform duration-300"
@@ -126,28 +121,70 @@
             </label>
           </div>
 
-          <div class="mt-8 flex justify-center">
-            <button
-              id="analyzeButton"
-              class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
-            >
-              <span class="flex items-center gap-2">
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <!-- New container for side-by-side layout -->
+          <div id="previewContainer" class="hidden">
+            <div class="flex gap-6 items-center mb-8">
+              <div class="w-1/2">
+                <img
+                  id="imagePreview"
+                  class="w-full h-64 object-contain rounded-lg shadow-xl bg-gray-800/50 p-4"
+                />
+              </div>
+              <div class="w-1/2">
+                <div
+                  class="border-2 border-dashed border-gray-600/50 rounded-xl p-8 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                Convert to Code
-              </span>
-            </button>
+                  <label
+                    for="fileInput"
+                    class="cursor-pointer block group-hover:scale-105 transition-transform duration-300"
+                  >
+                    <div
+                      class="bg-gray-700/50 rounded-full p-4 w-16 h-16 mx-auto mb-4 group-hover:bg-blue-500/20 transition-colors"
+                    >
+                      <svg
+                        class="w-full h-full text-gray-400 group-hover:text-blue-400 transition-colors"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <p class="text-base font-medium text-gray-300">
+                      Choose different image
+                    </p>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-center">
+              <button
+                id="analyzeButton"
+                class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
+              >
+                <span class="flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  Convert to Code
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -368,19 +405,25 @@
           .getElementById("fileInput")
           .addEventListener("change", function (e) {
             if (this.files && this.files[0]) {
-              // Enable analyze button
-              document.getElementById("analyzeButton").disabled = false;
+              // Show image preview and side-by-side layout
+              const uploadContainer =
+                document.getElementById("uploadContainer");
+              const previewContainer =
+                document.getElementById("previewContainer");
+
+              uploadContainer.classList.add("hidden");
+              previewContainer.classList.remove("hidden");
 
               // Show image preview
               const reader = new FileReader();
               reader.onload = function (e) {
-                const previewContainer =
-                  document.getElementById("previewContainer");
                 const imagePreview = document.getElementById("imagePreview");
                 imagePreview.src = e.target.result;
-                previewContainer.classList.remove("hidden");
               };
               reader.readAsDataURL(this.files[0]);
+
+              // Enable analyze button
+              document.getElementById("analyzeButton").disabled = false;
             }
           });
 
@@ -612,7 +655,7 @@
                 messageElement.innerHTML = `
                   <div class="flex flex-col space-y-2">
                     <div class="flex justify-end">
-                      <div class="bg-blue-600 text-white rounded-lg py-2 px-4 max-w-[80%]">
+                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]">
                         <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
                         <p class="text-sm">New image uploaded</p>
                       </div>
