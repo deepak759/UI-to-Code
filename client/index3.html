@@ -23,7 +23,9 @@
       #content {
         margin-bottom: 0px !important;
       }
-
+.wp-image-1053{
+width:80% !important;
+}
       /* Add these styles to match kr2.html */
       .fusion-builder-row {
         max-width: 100vw !important;
@@ -294,7 +296,7 @@
       </div>
 
       <!-- Added SEO-friendly content section -->
-      <div class="max-w-6xl mx-auto py-16 px-4">
+      <div class="max-w-6xl mx-auto py-16 px-4" id="contentSection">
         <div class="space-y-16">
           <!-- How It Works Section -->
           <section class="space-y-6">
@@ -543,6 +545,9 @@
           .addEventListener("click", async function () {
             const fileInput = document.getElementById("fileInput");
             if (fileInput.files && fileInput.files[0]) {
+              // Hide content section
+              document.getElementById("contentSection").classList.add("hidden");
+
               // Show loading state and chat interface
               document.getElementById("imageUpload").classList.add("hidden");
               document
