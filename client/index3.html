@@ -23,9 +23,9 @@
       #content {
         margin-bottom: 0px !important;
       }
-.wp-image-1053{
-width:80% !important;
-}
+      .wp-image-1053 {
+        width: 80% !important;
+      }
       /* Add these styles to match kr2.html */
       .fusion-builder-row {
         max-width: 100vw !important;
@@ -1004,26 +1004,65 @@ width:80% !important;
 
         // Replace the loadingAnimation constant with this new version
         const loadingAnimation = `
-<div class="flex flex-col items-center justify-center min-h-[500px] bg-gray-900">
-<div class="relative">
-  <!-- Main circle -->
-  <div class="w-24 h-24 rounded-full border-[3px] border-blue-500/20 relative">
-    <!-- Spinning arc -->
-    <div class="absolute inset-0 rounded-full border-[3px] border-blue-500 border-t-transparent animate-[spin_1s_cubic-bezier(0.55,0.25,0.25,0.70)_infinite]"></div>
-    
-    <!-- Pulsing center -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-      <div class="w-12 h-12 bg-blue-500/10 rounded-full animate-[pulse_2s_infinite]"></div>
-    </div>
+<div class="flex flex-col items-center justify-center min-h-[500px]  backdrop-blur-sm">
+  <!-- Ripple loading container -->
+  <div class="loader-container absolute inset-0 flex items-center justify-center">
+    <div class="ripple"></div>
+  </div>
+  
+  <!-- Loading text -->
+  <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-center">
+    <h3 class="text-lg font-medium !text-gray-200">
+      Generating Code...
+    </h3>
   </div>
 </div>
 
-<!-- Loading text -->
-<div class="mt-8 text-center">
-  <h3 class="text-xl font-semibold !text-gray-200 mb-2">Analyzing Design</h3>
-  <p class="text-sm text-gray-400">Converting your image into clean code</p>
-</div>
-</div>`;
+<style>
+  .loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+  }
+
+  .ripple {
+    position: relative;
+    width: 50px;
+    height: 50px;
+  }
+
+  .ripple::before, .ripple::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid #3B82F6;
+    opacity: 0;
+    animation: ripple 3s infinite;
+  }
+
+  .ripple::after {
+    animation-delay: 1.5s;
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    25% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+</style>
+`;
 
         // Show loading animation in code view by default
         codeContent.classList.remove("hidden");
