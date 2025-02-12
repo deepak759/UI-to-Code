@@ -71,8 +71,19 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     }
     // Case 2: Text message with history (code modification request)
     else if (!req.file && conversationHistory.length > 0) {
-      // Find the last code response in history
-      const lastCode = conversationHistory
+      // Format the complete conversation history for context
+      const conversationContext = conversationHistory
+        .map((msg) => {
+          if (msg.role === "user" && msg.type === "image") {
+            return `${msg.role.toUpperCase()}: [Uploaded Image]`;
+          }
+          return `${msg.role.toUpperCase()}: ${msg.content}`;
+        })
+        .join("\n\n");
+
+      // Find the code that needs to be modified
+      // This could be either the last generated code or a specific code referenced by the user
+      const targetCode = conversationHistory
         .filter(
           (msg) =>
             msg.role === "assistant" &&
@@ -82,25 +93,31 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
         )
         .pop()?.content;
 
-      // Format the conversation history for context
-      const conversationContext = conversationHistory
-        .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
-        .join("\n\n");
-
-      prompt = `Previous conversation and code context:
+      prompt = `Complete conversation history for context:
 ${conversationContext}
 
 Current code to modify:
-${lastCode || "No previous code found"}
+${targetCode || "No previous code found"}
 
 User's new request: "${userMessage}"
 
-Please modify the code according to the user's request and the conversation history. Return the complete updated code wrapped in \`\`\`html code blocks. Make sure to maintain all existing functionality while implementing the requested changes.`;
+Please modify the code according to the user's request while maintaining the context of the entire conversation. Return the complete updated code wrapped in \`\`\`html code blocks. Ensure all existing functionality is preserved while implementing the requested changes.`;
     }
     // Case 3: New image upload (with history)
     else if (req.file) {
-      prompt =
-        "Create new responsive HTML and CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
+      const conversationContext = conversationHistory
+        .map((msg) => {
+          if (msg.role === "user" && msg.type === "image") {
+            return `${msg.role.toUpperCase()}: [Uploaded Image]`;
+          }
+          return `${msg.role.toUpperCase()}: ${msg.content}`;
+        })
+        .join("\n\n");
+
+      prompt = `Previous conversation context:
+${conversationContext}
+
+Now, create new responsive HTML and CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.`;
     } else {
       return res.status(400).json({
         error:

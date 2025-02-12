@@ -690,17 +690,13 @@
           const historyDiv = document.getElementById("imageHistory");
 
           if (message) {
-            // Get the current code from the output section if it exists
-            const currentCode =
-              document.querySelector("#codeContent code")?.textContent || "";
-
             // Create and append user message immediately
             const messageElement = document.createElement("div");
-            messageElement.className = "mb-1";
+            messageElement.className = "mb-3";
             messageElement.innerHTML = `
-              <div class="flex flex-col space-y-1">
+              <div class="flex flex-col space-y-2">
                 <div class="flex justify-end">
-                  <div class="bg-gray-600 text-white rounded-lg py-1.5 px-3 max-w-[80%]" data-role="user">
+                  <div class="bg-gray-600 text-white rounded-lg py-1.5 px-3 max-w-[80%]" data-role="user" data-type="text">
                     <p class="text-sm">${message}</p>
                   </div>
                 </div>
@@ -714,53 +710,51 @@
             historyDiv.appendChild(messageElement);
             historyDiv.scrollTop = historyDiv.scrollHeight;
 
+            // Collect all messages from chat history
+            const historyMessages = Array.from(historyDiv.children)
+              .map((el) => {
+                const userMsg = el.querySelector('[data-role="user"]');
+                const aiMsg = el.querySelector('[data-role="assistant"]');
+                const messages = [];
+
+                if (userMsg) {
+                  messages.push({
+                    role: "user",
+                    type: userMsg.dataset.type || "text",
+                    content: userMsg.querySelector(".text-sm").textContent,
+                  });
+                }
+                if (
+                  aiMsg &&
+                  !aiMsg
+                    .querySelector(".text-sm")
+                    .textContent.includes("Thinking...")
+                ) {
+                  messages.push({
+                    role: "assistant",
+                    type: "text",
+                    content: aiMsg.querySelector(".text-sm").textContent,
+                  });
+                }
+                return messages;
+              })
+              .flat();
+
+            // Add the current code if it exists
+            const currentCode =
+              document.querySelector("#codeContent code")?.textContent;
+            if (currentCode) {
+              historyMessages.push({
+                role: "assistant",
+                type: "code",
+                content: currentCode,
+              });
+            }
+
             // Clear input after sending
             messageInput.value = "";
 
             try {
-              // Collect all messages from chat history
-              const historyMessages = Array.from(historyDiv.children)
-                .map((el) => {
-                  const userMsg = el.querySelector(
-                    '[data-role="user"] .text-sm'
-                  )?.textContent;
-                  const aiMsg = el.querySelector(
-                    '[data-role="assistant"] .text-sm'
-                  )?.textContent;
-                  const messages = [];
-
-                  if (userMsg) {
-                    messages.push({
-                      role: "user",
-                      content: userMsg,
-                    });
-                  }
-                  if (aiMsg && !aiMsg.includes("Thinking...")) {
-                    messages.push({
-                      role: "assistant",
-                      content: aiMsg,
-                    });
-                  }
-                  return messages;
-                })
-                .flat();
-
-              // Add the current code if it exists
-              if (currentCode) {
-                historyMessages.push({
-                  role: "assistant",
-                  content: currentCode,
-                });
-              }
-
-              // Add the new user message
-              historyMessages.push({
-                role: "user",
-                content: message,
-              });
-
-              console.log("Sending history:", historyMessages); // Debug log
-
               // Make API request
               const response = await fetch(
                 "http://localhost:3000/api/generate",
@@ -900,7 +894,7 @@
                 messageElement.innerHTML = `
                   <div class="flex flex-col space-y-2">
                     <div class="flex justify-end">
-                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]">
+                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
                         <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
                         <p class="text-sm">New image uploaded</p>
                       </div>
@@ -915,22 +909,40 @@
                 historyDiv.appendChild(messageElement);
                 historyDiv.scrollTop = historyDiv.scrollHeight;
 
-                // Create FormData and append the file
+                // Collect all messages from chat history
+                const historyMessages = Array.from(historyDiv.children)
+                  .map((el) => {
+                    const userMsg = el.querySelector('[data-role="user"]');
+                    const aiMsg = el.querySelector('[data-role="assistant"]');
+                    const messages = [];
+
+                    if (userMsg) {
+                      messages.push({
+                        role: "user",
+                        type: userMsg.dataset.type || "text",
+                        content: userMsg.querySelector(".text-sm").textContent,
+                      });
+                    }
+                    if (
+                      aiMsg &&
+                      !aiMsg
+                        .querySelector(".text-sm")
+                        .textContent.includes("Generating UI code...")
+                    ) {
+                      messages.push({
+                        role: "assistant",
+                        type: "text",
+                        content: aiMsg.querySelector(".text-sm").textContent,
+                      });
+                    }
+                    return messages;
+                  })
+                  .flat();
+
+                // Create FormData and append the file and history
                 const formData = new FormData();
                 formData.append("image", this.files[0]);
-
-                // Get current code if exists (for Case 3)
-                const currentCode =
-                  document.querySelector("#codeContent code")?.textContent;
-                if (currentCode) {
-                  const historyMessages = [
-                    {
-                      role: "assistant",
-                      content: `Previous generated code:\n${currentCode}`,
-                    },
-                  ];
-                  formData.append("history", JSON.stringify(historyMessages));
-                }
+                formData.append("history", JSON.stringify(historyMessages));
 
                 try {
                   // Show loading state
