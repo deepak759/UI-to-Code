@@ -147,7 +147,33 @@ Now, create new responsive HTML and CSS code that matches this new UI image. Inc
       await fs.unlink(req.file.path).catch(console.error);
     }
 
-    // Process the response to replace both src and background-image URLs
+    // Clean the response to extract only HTML code
+    function extractHtmlCode(text) {
+      // If response contains code blocks, extract the HTML
+      if (text.includes("```html")) {
+        const match = text.match(/```html\n([\s\S]*?)\n```/);
+        return match ? match[1].trim() : text;
+      }
+      // If response starts with <!DOCTYPE or <html, assume it's pure HTML
+      if (
+        text.trim().startsWith("<!DOCTYPE") ||
+        text.trim().startsWith("<html")
+      ) {
+        return text.trim();
+      }
+      // If no code blocks found but contains HTML tags, extract everything between first < and last >
+      if (text.includes("<") && text.includes(">")) {
+        const start = text.indexOf("<");
+        const end = text.lastIndexOf(">") + 1;
+        return text.slice(start, end);
+      }
+      return text;
+    }
+
+    // Clean the response
+    response = extractHtmlCode(response);
+
+    // Process image URLs
     if (response.includes('src="') || response.includes("background-image")) {
       // Replace src attributes
       const imgRegex = /src="([^"]+)"/g;
@@ -174,12 +200,8 @@ Now, create new responsive HTML and CSS code that matches this new UI image. Inc
       }
     }
 
-    // For Case 2, ensure the response contains code blocks
-    if (
-      !req.file &&
-      conversationHistory.length > 0 &&
-      !response.includes("```html")
-    ) {
+    // Ensure the response is wrapped in code blocks for the frontend
+    if (!response.includes("```html")) {
       response = "```html\n" + response + "\n```";
     }
 

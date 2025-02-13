@@ -263,7 +263,29 @@
                     <!-- Preview iframe will be inserted here -->
                   </div>
                   <div id="codeContent" class="hidden">
-                    <pre><code class="language-html"></code></pre>
+                    <div class="flex justify-end mb-2">
+                      <button
+                        id="applyChanges"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mr-2 transition-colors"
+                      >
+                        Apply Changes
+                      </button>
+                      <button
+                        id="resetCode"
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <div class="relative">
+                      <textarea
+                        id="codeEditor"
+                        class="w-full h-[500px] font-mono text-sm bg-gray-800 text-gray-100 p-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      ></textarea>
+                      <pre
+                        class="hidden"
+                      ><code class="language-html"></code></pre>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -704,15 +726,21 @@
             }
           });
 
-        // First, add a function to store responses in sessionStorage
-        function storeInSession(imageId, data) {
+        // Update the storeInSession function to clean the code before storing
+        function storeInSession(responseId, data) {
+          // Clean the code to extract only the HTML content
+          let cleanCode = data.code;
+          if (data.code.includes("```html")) {
+            cleanCode = data.code.match(/```html\n([\s\S]*?)\n```/)[1];
+          }
+
           const sessionData = {
-            code: data.code,
+            code: cleanCode,
             imageUrl: data.imageUrl,
             timestamp: new Date().toISOString(),
           };
           sessionStorage.setItem(
-            `response_${imageId}`,
+            `response_${responseId}`,
             JSON.stringify(sessionData)
           );
         }
@@ -913,9 +941,8 @@
 
                 // Create and append the image message
                 const messageElement = document.createElement("div");
-
                 messageElement.innerHTML = `
-                  <div class="flex flex-col  space-y-2">
+                  <div class="flex flex-col space-y-2">
                     <div class="flex mb-3 justify-end">
                       <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
                         <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
@@ -931,6 +958,27 @@
                 `;
                 historyDiv.appendChild(messageElement);
                 historyDiv.scrollTop = historyDiv.scrollHeight;
+
+                // Show loading animation in code view
+                const codeElement = document.querySelector("#codeContent code");
+                codeElement.innerHTML = loadingAnimation;
+                document
+                  .getElementById("codeContent")
+                  .classList.remove("hidden");
+                document
+                  .getElementById("previewContent")
+                  .classList.add("hidden");
+
+                // Also show loading in the code editor
+                const codeEditor = document.getElementById("codeEditor");
+                codeEditor.value = "Generating code...";
+                codeEditor.disabled = true;
+
+                // Disable buttons during loading
+                document.getElementById("applyChanges").disabled = true;
+                document.getElementById("resetCode").disabled = true;
+                document.getElementById("copyButton").disabled = true;
+                document.getElementById("newTabButton").disabled = true;
 
                 // Collect all messages from chat history
                 const historyMessages = Array.from(historyDiv.children)
@@ -968,17 +1016,6 @@
                 formData.append("history", JSON.stringify(historyMessages));
 
                 try {
-                  // Show loading state
-                  const codeElement =
-                    document.querySelector("#codeContent code");
-                  codeElement.innerHTML = loadingAnimation;
-                  document
-                    .getElementById("codeContent")
-                    .classList.remove("hidden");
-                  document
-                    .getElementById("previewContent")
-                    .classList.add("hidden");
-
                   // Make API request
                   const response = await fetch(
                     "http://localhost:3000/api/generate",
@@ -1006,7 +1043,7 @@
 
                   loadingResponse.innerHTML = `
                     <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
-                      <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}', true)">
+                      <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
                         <p class="text-sm">Code generated</p>
                         <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
@@ -1015,11 +1052,22 @@
                     </div>
                   `;
 
+                  // Re-enable the code editor and buttons
+                  codeEditor.disabled = false;
+                  document.getElementById("applyChanges").disabled = false;
+                  document.getElementById("resetCode").disabled = false;
+                  document.getElementById("copyButton").disabled = false;
+                  document.getElementById("newTabButton").disabled = false;
+
                   // Update the output area with the latest code
                   const cleanCode = data.response.replace(/```html\n|```/g, "");
                   codeElement.textContent = cleanCode;
                   codeElement.className = "language-html";
                   Prism.highlightElement(codeElement);
+
+                  // Update code editor with the new code
+                  codeEditor.value = cleanCode;
+                  originalCode = cleanCode;
 
                   // Show code view and update preview
                   document
@@ -1042,6 +1090,13 @@
                       <p class="text-sm">Sorry, there was an error generating the UI code.</p>
                     </div>
                   `;
+
+                  // Re-enable the code editor and buttons
+                  codeEditor.disabled = false;
+                  document.getElementById("applyChanges").disabled = false;
+                  document.getElementById("resetCode").disabled = false;
+                  document.getElementById("copyButton").disabled = false;
+                  document.getElementById("newTabButton").disabled = false;
                 }
               }.bind(this);
               reader.readAsDataURL(this.files[0]);
@@ -1125,29 +1180,7 @@
         previewButton.addEventListener("click", () => {
           previewContent.classList.remove("hidden");
           codeContent.classList.add("hidden");
-
-          // Create iframe for preview if it doesn't exist
-          if (!previewContent.querySelector("iframe")) {
-            const iframe = document.createElement("iframe");
-            iframe.style.width = "100%";
-            iframe.style.height = "500px";
-            iframe.style.border = "none";
-            iframe.style.backgroundColor = "white";
-            previewContent.appendChild(iframe);
-
-            // Write the loading animation to the iframe
-            iframe.contentDocument.open();
-            iframe.contentDocument.write(`
-            <style>
-              body { 
-                margin: 0; 
-                background: white;
-              }
-            </style>
-            ${loadingAnimation}
-          `);
-            iframe.contentDocument.close();
-          }
+          updatePreviewWithEditedCode();
         });
 
         codeButton.addEventListener("click", () => {
@@ -1157,33 +1190,30 @@
 
         newTabButton.addEventListener("click", () => {
           const newWindow = window.open();
+          const editedCode = document.getElementById("codeEditor").value;
           newWindow.document.write(`
           <style>
             body { margin: 0; }
           </style>
-          ${window.sampleCode || loadingAnimation}
+          ${editedCode}
         `);
           newWindow.document.close();
         });
 
-        // Update showHistoricalResponse to always show the clicked response
-        function showHistoricalResponse(responseId, keepLatest = false) {
+        // Update showHistoricalResponse to use the clean code directly
+        function showHistoricalResponse(responseId) {
           const sessionData = JSON.parse(
             sessionStorage.getItem(`response_${responseId}`)
           );
           if (!sessionData) return;
 
-          // Remove the keepLatest check so it always shows the clicked response
-          const codeElement = document.querySelector("#codeContent code");
-          const cleanCode = sessionData.code.replace(/```html\n|```/g, "");
-          codeElement.textContent = cleanCode;
-          codeElement.className = "language-html";
-          Prism.highlightElement(codeElement);
+          const codeEditor = document.getElementById("codeEditor");
+          originalCode = sessionData.code; // Store original code
+          codeEditor.value = originalCode; // Set editor content
 
           // Show code view and update preview
           document.getElementById("codeContent").classList.remove("hidden");
           document.getElementById("previewContent").classList.add("hidden");
-          updatePreviewIframe(cleanCode);
 
           // If there's an image, update the preview
           if (sessionData.imageUrl) {
@@ -1207,8 +1237,8 @@
         document
           .getElementById("copyButton")
           .addEventListener("click", async () => {
-            const codeElement = document.querySelector("#codeContent code");
-            const textToCopy = codeElement.textContent;
+            const codeEditor = document.getElementById("codeEditor");
+            const textToCopy = codeEditor.value;
 
             try {
               await navigator.clipboard.writeText(textToCopy);
@@ -1231,6 +1261,53 @@
               console.error("Failed to copy text:", err);
             }
           });
+
+        // Add these new functions and event listeners
+        let originalCode = ""; // Store the original code
+
+        // Function to update the preview with edited code
+        function updatePreviewWithEditedCode() {
+          const editedCode = document.getElementById("codeEditor").value;
+          updatePreviewIframe(editedCode);
+        }
+
+        // Function to reset code to original
+        function resetCode() {
+          document.getElementById("codeEditor").value = originalCode;
+          updatePreviewWithEditedCode();
+        }
+
+        // Update showHistoricalResponse to work with the code editor
+        function showHistoricalResponse(responseId) {
+          const sessionData = JSON.parse(
+            sessionStorage.getItem(`response_${responseId}`)
+          );
+          if (!sessionData) return;
+
+          const codeEditor = document.getElementById("codeEditor");
+          originalCode = sessionData.code; // Store original code
+          codeEditor.value = originalCode; // Set editor content
+
+          // Show code view and update preview
+          document.getElementById("codeContent").classList.remove("hidden");
+          document.getElementById("previewContent").classList.add("hidden");
+
+          // If there's an image, update the preview
+          if (sessionData.imageUrl) {
+            const imagePreview = document.getElementById("imagePreview");
+            if (imagePreview) {
+              imagePreview.src = sessionData.imageUrl;
+            }
+          }
+        }
+
+        // Add event listeners for new buttons
+        document
+          .getElementById("applyChanges")
+          .addEventListener("click", updatePreviewWithEditedCode);
+        document
+          .getElementById("resetCode")
+          .addEventListener("click", resetCode);
       </script>
 
       <style>
@@ -1288,6 +1365,20 @@
             transform: scale(1.1);
             opacity: 0.8;
           }
+        }
+
+        #codeEditor {
+          font-family: "Fira Code", monospace;
+          line-height: 1.5;
+          tab-size: 2;
+          -moz-tab-size: 2;
+          resize: none;
+          white-space: pre;
+        }
+
+        #codeEditor:focus {
+          outline: none;
+          border-color: #3b82f6;
         }
       </style>
     </div>
