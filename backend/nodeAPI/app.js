@@ -67,7 +67,7 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     // Case 1: Initial image upload (no history)
     if (req.file && conversationHistory.length === 0) {
       prompt =
-        "Create responsive HTML and CSS code that matches this UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
+        "Create responsive HTML + CSS code that matches this UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
     }
     // Case 2: Text message with history (code modification request)
     else if (!req.file && conversationHistory.length > 0) {
@@ -117,7 +117,7 @@ Please modify the code according to the user's request while maintaining the con
       prompt = `Previous conversation context:
 ${conversationContext}
 
-Now, create new responsive HTML and CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.`;
+Now, create new responsive HTML + CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.`;
     } else {
       return res.status(400).json({
         error:

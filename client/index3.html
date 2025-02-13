@@ -636,11 +636,40 @@
             document.getElementById("chatInterface").classList.remove("hidden");
             document.getElementById("imageUpload").classList.add("hidden");
 
+            // Add this line to hide the content section
+            document.getElementById("contentSection").classList.add("hidden");
+
             // Get the uploaded image
             const fileInput = document.getElementById("fileInput");
             if (fileInput.files && fileInput.files[0]) {
-              const formData = new FormData();
-              formData.append("image", fileInput.files[0]);
+              // Add to chat history immediately
+              const historyDiv = document.getElementById("imageHistory");
+              const messageElement = document.createElement("div");
+              messageElement.innerHTML = `
+                <div class="flex flex-col space-y-2">
+                  <div class="flex mb-3 justify-end">
+                    <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
+                      <img src="${URL.createObjectURL(
+                        fileInput.files[0]
+                      )}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
+                      <p class="text-sm">Image uploaded</p>
+                    </div>
+                  </div>
+                  <div class="flex justify-start" id="ai-response-loading">
+                    <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-sm">Generating UI code...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+              historyDiv.appendChild(messageElement);
+              historyDiv.scrollTop = historyDiv.scrollHeight;
 
               // Show loading state in code view
               const codeElement = document.querySelector("#codeContent code");
@@ -652,6 +681,9 @@
               const codeEditor = document.getElementById("codeEditor");
               codeEditor.value = "Generating code...";
               codeEditor.disabled = true;
+
+              const formData = new FormData();
+              formData.append("image", fileInput.files[0]);
 
               try {
                 const response = await fetch(
@@ -689,39 +721,40 @@
                 // Update preview
                 updatePreviewIframe(cleanCode);
 
-                // Add to chat history
-                const historyDiv = document.getElementById("imageHistory");
-                const messageElement = document.createElement("div");
-                messageElement.innerHTML = `
-                  <div class="flex flex-col space-y-2">
-                    <div class="flex mb-3 justify-end">
-                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
-                        <img src="${URL.createObjectURL(
-                          fileInput.files[0]
-                        )}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
-                        <p class="text-sm">Image uploaded</p>
-                      </div>
-                    </div>
-                    <div class="flex justify-start">
-                      <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
-                        <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
-                          <p class="text-sm">Code generated</p>
-                          <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
-                          </svg>
-                        </div>
-                      </div>
+                // Update the loading message with the generated code response
+                const loadingResponse = messageElement.querySelector(
+                  "#ai-response-loading"
+                );
+                loadingResponse.innerHTML = `
+                  <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                    <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                      <p class="text-sm">Code generated</p>
+                      <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                      </svg>
                     </div>
                   </div>
                 `;
-                historyDiv.appendChild(messageElement);
-                historyDiv.scrollTop = historyDiv.scrollHeight;
+
+                // Enable message input and send button after code is generated
+                document.getElementById("sendButton").disabled = false;
+                document.getElementById("messageInput").disabled = false;
               } catch (error) {
                 console.error("Error:", error);
                 codeElement.textContent =
                   "Error generating code. Please try again.";
                 codeEditor.value = "Error generating code. Please try again.";
                 codeEditor.disabled = false;
+
+                // Update the loading message with error
+                const loadingResponse = messageElement.querySelector(
+                  "#ai-response-loading"
+                );
+                loadingResponse.innerHTML = `
+                  <div class="bg-gray-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
+                    <p class="text-sm">Sorry, there was an error generating the UI code.</p>
+                  </div>
+                `;
               }
             }
           });
