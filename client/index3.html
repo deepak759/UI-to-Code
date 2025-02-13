@@ -68,6 +68,24 @@
         font-size: 0.875rem !important;
         line-height: 1.5 !important;
       }
+
+      /* Update button hover effects */
+      #applyChanges:hover,
+      #resetCode:hover {
+        backdrop-filter: blur(8px);
+        transform: translateY(-1px);
+      }
+
+      #applyChanges:active,
+      #resetCode:active {
+        transform: translateY(0px);
+      }
+
+      /* Update toast styling */
+      .fixed {
+        animation: slideIn 0.3s ease forwards;
+        backdrop-filter: blur(8px);
+      }
     </style>
     <div class="bg-gray-900">
       <script src="https://cdn.tailwindcss.com"></script>
@@ -263,21 +281,47 @@
                     <!-- Preview iframe will be inserted here -->
                   </div>
                   <div id="codeContent" class="hidden">
-                    <div class="flex justify-end mb-2">
-                      <button
-                        id="applyChanges"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mr-2 transition-colors"
-                      >
-                        Apply Changes
-                      </button>
-                      <button
-                        id="resetCode"
-                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                      >
-                        Reset
-                      </button>
-                    </div>
                     <div class="relative">
+                      <div class="absolute top-2 right-2 z-10 flex gap-2">
+                        <button
+                          id="applyChanges"
+                          class="bg-gray-700/50 hover:bg-green-600/50 text-gray-200 px-3 py-1.5 rounded text-sm backdrop-blur-sm transition-all duration-300 flex items-center gap-1"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          Apply
+                        </button>
+                        <button
+                          id="resetCode"
+                          class="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-3 py-1.5 rounded text-sm backdrop-blur-sm transition-all duration-300 flex items-center gap-1"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Reset
+                        </button>
+                      </div>
                       <textarea
                         id="codeEditor"
                         class="w-full h-[500px] font-mono text-sm bg-gray-800 text-gray-100 p-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -585,46 +629,31 @@
         document
           .getElementById("analyzeButton")
           .addEventListener("click", async function () {
+            // Clear session storage when starting fresh
+            sessionStorage.clear();
+
+            // Show chat interface and hide upload container
+            document.getElementById("chatInterface").classList.remove("hidden");
+            document.getElementById("imageUpload").classList.add("hidden");
+
+            // Get the uploaded image
             const fileInput = document.getElementById("fileInput");
             if (fileInput.files && fileInput.files[0]) {
-              // Hide content section
-              document.getElementById("contentSection").classList.add("hidden");
-
-              // Show loading state and chat interface
-              document.getElementById("imageUpload").classList.add("hidden");
-              document
-                .getElementById("chatInterface")
-                .classList.remove("hidden");
-
-              // Add the uploaded image to history immediately
-              const reader = new FileReader();
-              reader.onload = function (e) {
-                const historyDiv = document.getElementById("imageHistory");
-                const newImage = document.createElement("div");
-                newImage.className =
-                  "border border-gray-700 rounded-lg p-2 hover:bg-gray-700 cursor-pointer transition-colors mb-3";
-                newImage.innerHTML = `
-                <img src="${e.target.result}" alt="Uploaded image" class="w-full h-32 object-cover rounded-lg mb-2">
-                <p class="text-sm text-gray-400 truncate">${fileInput.files[0].name}</p>
-              `;
-                historyDiv.appendChild(newImage);
-              };
-              reader.readAsDataURL(fileInput.files[0]);
-
-              // Show loading animation in both preview and code views
-              const previewContent = document.getElementById("previewContent");
-              const codeContent = document.getElementById("codeContent");
-              const codeElement = codeContent.querySelector("code");
-
-              previewContent.innerHTML = loadingAnimation;
-              codeElement.innerHTML = loadingAnimation;
-
-              // Create FormData and append the file
               const formData = new FormData();
               formData.append("image", fileInput.files[0]);
 
+              // Show loading state in code view
+              const codeElement = document.querySelector("#codeContent code");
+              codeElement.innerHTML = loadingAnimation;
+              document.getElementById("codeContent").classList.remove("hidden");
+              document.getElementById("previewContent").classList.add("hidden");
+
+              // Disable the code editor during loading
+              const codeEditor = document.getElementById("codeEditor");
+              codeEditor.value = "Generating code...";
+              codeEditor.disabled = true;
+
               try {
-                // Make API request
                 const response = await fetch(
                   "http://localhost:3000/api/generate",
                   {
@@ -634,59 +663,69 @@
                 );
 
                 const data = await response.json();
+                const responseId = Date.now().toString();
 
-                // Extract HTML code from the response
-                const htmlCode = data.response.match(
-                  /```html\n([\s\S]*?)\n```/
-                )[1];
+                // Store response in session storage
+                storeInSession(responseId, {
+                  code: data.response,
+                  imageUrl: URL.createObjectURL(fileInput.files[0]),
+                  timestamp: new Date().toISOString(),
+                });
 
-                // Update code view with syntax highlighting
-                codeElement.textContent = htmlCode;
+                // Set this as the last response
+                sessionStorage.setItem("lastResponseId", responseId);
+
+                // Update the code view
+                const cleanCode = data.response.replace(/```html\n|```/g, "");
+                codeElement.textContent = cleanCode;
                 codeElement.className = "language-html";
                 Prism.highlightElement(codeElement);
 
-                // Update preview iframe
-                const iframe = document.createElement("iframe");
-                iframe.style.width = "100%";
-                iframe.style.height = "500px";
-                iframe.style.border = "none";
-                iframe.style.backgroundColor = "white";
-                previewContent.innerHTML = ""; // Clear existing content
-                previewContent.appendChild(iframe);
+                // Update code editor
+                codeEditor.disabled = false;
+                codeEditor.value = cleanCode;
+                originalCode = cleanCode;
 
-                // Write the code to the iframe with default white background
-                iframe.contentDocument.open();
-                iframe.contentDocument.write(`
-                <style>
-                  body { 
-                    margin: 0; 
-                    background: white;
-                  }
-                </style>
-                ${htmlCode}
-              `);
-                iframe.contentDocument.close();
+                // Update preview
+                updatePreviewIframe(cleanCode);
 
-                // Update sampleCode variable for "Open in new tab" functionality
-                window.sampleCode = `
-                <style>
-                  body { 
-                    margin: 0; 
-                    background: white;
-                  }
-                </style>
-                ${htmlCode}
-              `;
-
-                // Enable the send button and input after image is uploaded
-                document.getElementById("sendButton").disabled = false;
-                document.getElementById("messageInput").disabled = false;
+                // Add to chat history
+                const historyDiv = document.getElementById("imageHistory");
+                const messageElement = document.createElement("div");
+                messageElement.innerHTML = `
+                  <div class="flex flex-col space-y-2">
+                    <div class="flex mb-3 justify-end">
+                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
+                        <img src="${URL.createObjectURL(
+                          fileInput.files[0]
+                        )}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
+                        <p class="text-sm">Image uploaded</p>
+                      </div>
+                    </div>
+                    <div class="flex justify-start">
+                      <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                        <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                          <p class="text-sm">Code generated</p>
+                          <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                historyDiv.appendChild(messageElement);
+                historyDiv.scrollTop = historyDiv.scrollHeight;
               } catch (error) {
                 console.error("Error:", error);
-                // Handle error appropriately
+                codeElement.textContent =
+                  "Error generating code. Please try again.";
+                codeEditor.value = "Error generating code. Please try again.";
+                codeEditor.disabled = false;
               }
             }
           });
+
         // Preview image on file select
         document
           .getElementById("fileInput")
