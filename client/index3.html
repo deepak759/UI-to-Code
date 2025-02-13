@@ -193,7 +193,7 @@
         <div class="hidden" id="chatInterface">
           <div class="flex gap-6">
             <div
-              class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-[calc(100vh-2rem)] flex flex-col"
+              class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-[calc(100vh-7rem)] flex flex-col"
             >
               <h3 class="text-lg font-semibold mb-3 !text-gray-100">History</h3>
               <div
@@ -206,7 +206,7 @@
 
             <div class="w-3/4 space-y-3">
               <div
-                class="bg-gray-800 rounded-lg shadow-lg p-6 h-[calc(100vh-8rem)] overflow-y-auto scrollbar-custom"
+                class="bg-gray-800 rounded-lg shadow-lg p-6 h-[calc(100vh-12rem)] overflow-y-auto scrollbar-custom"
               >
                 <div class="flex justify-between items-center">
                   <div class="">
@@ -248,7 +248,7 @@
                 </div>
               </div>
 
-              <div class="!bg-gray-800 !rounded-lg !shadow-lg p-4">
+              <div class="!bg-gray-800 !rounded-lg !shadow-lg p-4 py-2">
                 <div class="flex items-center gap-3">
                   <input
                     type="text"
@@ -684,6 +684,29 @@
             }
           });
 
+        // First, add a function to store responses in sessionStorage
+        function storeInSession(imageId, data) {
+          const sessionData = {
+            code: data.code,
+            imageUrl: data.imageUrl,
+            timestamp: new Date().toISOString(),
+          };
+          sessionStorage.setItem(
+            `response_${imageId}`,
+            JSON.stringify(sessionData)
+          );
+        }
+
+        // Modify the getTruncatedCode function to show first 5 lines
+        function getTruncatedCode(code) {
+          if (!code) return "";
+          const cleanCode = code.replace(/```html\n|```/g, "").trim();
+          const lines = cleanCode.split("\n");
+          const firstFiveLines = lines.slice(0, 5).join("\n");
+          return firstFiveLines + (lines.length > 5 ? "\n..." : "");
+        }
+
+        // Modify the sendMessage function's response handling
         async function sendMessage() {
           const messageInput = document.getElementById("messageInput");
           const message = messageInput.value.trim();
@@ -692,16 +715,16 @@
           if (message) {
             // Create and append user message immediately
             const messageElement = document.createElement("div");
-            messageElement.className = "mb-3";
+            messageElement.className = "";
             messageElement.innerHTML = `
               <div class="flex flex-col space-y-2">
                 <div class="flex justify-end">
-                  <div class="bg-gray-600 text-white rounded-lg py-1.5 px-3 max-w-[80%]" data-role="user" data-type="text">
+                  <div class="bg-gray-600 text-white rounded-2xl py-0.5 px-3 max-w-[80%]" data-role="user" data-type="text">
                     <p class="text-sm">${message}</p>
                   </div>
                 </div>
                 <div class="flex justify-start" id="ai-response-loading">
-                  <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-3 max-w-[80%]">
+                  <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-2xl py-0.5 px-3 max-w-[80%]">
                     <p class="text-sm">Thinking...</p>
                   </div>
                 </div>
@@ -755,7 +778,6 @@
             messageInput.value = "";
 
             try {
-              // Make API request
               const response = await fetch(
                 "http://localhost:3000/api/generate",
                 {
@@ -771,64 +793,45 @@
               );
 
               const data = await response.json();
+              const responseId = Date.now().toString();
 
-              // Handle response based on case
-              if (data.case === 2 || !data.case) {
-                // Text modification request
-                // Check if the response contains code
-                const hasCode =
-                  data.response.includes("```html") ||
-                  data.response.includes("```css") ||
-                  data.response.includes("<html") ||
-                  data.response.includes("<body");
+              // Store response in sessionStorage
+              storeInSession(responseId, {
+                code: data.response,
+                timestamp: new Date().toISOString(),
+              });
 
-                if (hasCode) {
-                  // Extract HTML code from the response
-                  const htmlCode =
-                    data.response.match(/```html\n([\s\S]*?)\n```/) ||
-                    data.response.match(/<html[\s\S]*<\/html>/);
+              // Update AI response in chat with first 5 lines of code
+              const loadingResponse = messageElement.querySelector(
+                "#ai-response-loading"
+              );
+              const truncatedCode = getTruncatedCode(data.response);
 
-                  if (htmlCode && htmlCode[1]) {
-                    // Update code view
-                    const codeElement =
-                      document.querySelector("#codeContent code");
-                    codeElement.textContent = htmlCode[1];
-                    codeElement.className = "language-html";
-                    Prism.highlightElement(codeElement);
+              loadingResponse.innerHTML = `
+                <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-0.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                  <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                    <p class="text-sm">Code generated</p>
+                    <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                    </svg>
+                  </div>
+                </div>
+              `;
 
-                    // Show code view and hide preview
-                    document
-                      .getElementById("codeContent")
-                      .classList.remove("hidden");
-                    document
-                      .getElementById("previewContent")
-                      .classList.add("hidden");
+              // Update the output area with the latest code
+              const codeElement = document.querySelector("#codeContent code");
+              const cleanCode = data.response.replace(/```html\n|```/g, "");
+              codeElement.textContent = cleanCode;
+              codeElement.className = "language-html";
+              Prism.highlightElement(codeElement);
 
-                    // Update preview iframe
-                    updatePreviewIframe(htmlCode[1]);
+              // Show code view and update preview
+              document.getElementById("codeContent").classList.remove("hidden");
+              document.getElementById("previewContent").classList.add("hidden");
+              updatePreviewIframe(cleanCode);
 
-                    // Update AI response in chat
-                    const loadingResponse = messageElement.querySelector(
-                      "#ai-response-loading"
-                    );
-                    loadingResponse.innerHTML = `
-                      <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-3 max-w-[80%]" data-role="assistant">
-                        <p class="text-sm">I've updated the code with your changes! You can see it in the output section.</p>
-                      </div>
-                    `;
-                  }
-                } else {
-                  // Regular chat response
-                  const loadingResponse = messageElement.querySelector(
-                    "#ai-response-loading"
-                  );
-                  loadingResponse.innerHTML = `
-                    <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-3 max-w-[80%]" data-role="assistant">
-                      <p class="text-sm">${data.response}</p>
-                    </div>
-                  `;
-                }
-              }
+              // Store the latest response ID
+              sessionStorage.setItem("lastResponseId", responseId);
             } catch (error) {
               console.error("Error:", error);
               const loadingResponse = messageElement.querySelector(
@@ -890,10 +893,10 @@
 
                 // Create and append the image message
                 const messageElement = document.createElement("div");
-                messageElement.className = "mb-3";
+              
                 messageElement.innerHTML = `
-                  <div class="flex flex-col space-y-2">
-                    <div class="flex justify-end">
+                  <div class="flex flex-col  space-y-2">
+                    <div class="flex mb-3 justify-end">
                       <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
                         <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
                         <p class="text-sm">New image uploaded</p>
@@ -966,31 +969,49 @@
                   );
 
                   const data = await response.json();
+                  const responseId = Date.now().toString();
 
-                  // Extract HTML code from the response
-                  const htmlCode =
-                    data.response.match(/```html\n([\s\S]*?)\n```/) ||
-                    data.response.match(/<html[\s\S]*<\/html>/);
+                  // Store response and image in sessionStorage
+                  storeInSession(responseId, {
+                    code: data.response,
+                    imageUrl: e.target.result,
+                    timestamp: new Date().toISOString(),
+                  });
 
-                  if (htmlCode && htmlCode[1]) {
-                    // Update code view
-                    codeElement.textContent = htmlCode[1];
-                    codeElement.className = "language-html";
-                    Prism.highlightElement(codeElement);
+                  // Update AI response with first 5 lines of code
+                  const loadingResponse = messageElement.querySelector(
+                    "#ai-response-loading"
+                  );
+                  const truncatedCode = getTruncatedCode(data.response);
 
-                    // Update preview
-                    updatePreviewIframe(htmlCode[1]);
-
-                    // Update AI response in chat
-                    const loadingResponse = messageElement.querySelector(
-                      "#ai-response-loading"
-                    );
-                    loadingResponse.innerHTML = `
-                      <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-3 max-w-[80%]" data-role="assistant">
-                        <p class="text-sm">I've generated the UI code! You can see it in the output section.</p>
+                  loadingResponse.innerHTML = `
+                    <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                      <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                        <p class="text-sm">Code generated</p>
+                        <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                        </svg>
                       </div>
-                    `;
-                  }
+                    </div>
+                  `;
+
+                  // Update the output area with the latest code
+                  const cleanCode = data.response.replace(/```html\n|```/g, "");
+                  codeElement.textContent = cleanCode;
+                  codeElement.className = "language-html";
+                  Prism.highlightElement(codeElement);
+
+                  // Show code view and update preview
+                  document
+                    .getElementById("codeContent")
+                    .classList.remove("hidden");
+                  document
+                    .getElementById("previewContent")
+                    .classList.add("hidden");
+                  updatePreviewIframe(cleanCode);
+
+                  // Store the latest response ID
+                  sessionStorage.setItem("lastResponseId", responseId);
                 } catch (error) {
                   console.error("Error:", error);
                   const loadingResponse = messageElement.querySelector(
@@ -1123,6 +1144,43 @@
           ${window.sampleCode || loadingAnimation}
         `);
           newWindow.document.close();
+        });
+
+        // Update showHistoricalResponse to maintain the latest code in output
+        function showHistoricalResponse(responseId) {
+          const sessionData = JSON.parse(
+            sessionStorage.getItem(`response_${responseId}`)
+          );
+          if (!sessionData) return;
+
+          // Update code view with the historical code
+          const codeElement = document.querySelector("#codeContent code");
+          const cleanCode = sessionData.code.replace(/```html\n|```/g, "");
+          codeElement.textContent = cleanCode;
+          codeElement.className = "language-html";
+          Prism.highlightElement(codeElement);
+
+          // Show code view and update preview
+          document.getElementById("codeContent").classList.remove("hidden");
+          document.getElementById("previewContent").classList.add("hidden");
+          updatePreviewIframe(cleanCode);
+
+          // If there's an image, update the preview
+          if (sessionData.imageUrl) {
+            const imagePreview = document.getElementById("imagePreview");
+            if (imagePreview) {
+              imagePreview.src = sessionData.imageUrl;
+            }
+          }
+        }
+
+        // Add this to your window load event or initialization code
+        window.addEventListener("load", () => {
+          // Restore last session state if exists
+          const lastResponseId = sessionStorage.getItem("lastResponseId");
+          if (lastResponseId) {
+            showHistoricalResponse(lastResponseId);
+          }
         });
       </script>
 
