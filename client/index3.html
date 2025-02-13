@@ -898,6 +898,9 @@
             messageInput.value = "";
 
             try {
+              // Get the current code from the editor
+              const currentCode = document.getElementById("codeEditor").value;
+
               const response = await fetch(
                 "http://localhost:3000/api/generate",
                 {
@@ -907,6 +910,7 @@
                   },
                   body: JSON.stringify({
                     message: message,
+                    currentCode: currentCode, // Send current code to the API
                     history: JSON.stringify(historyMessages),
                   }),
                 }
@@ -915,21 +919,22 @@
               const data = await response.json();
               const responseId = Date.now().toString();
 
+              // Clean the received code
+              const cleanCode = data.response.replace(/```html\n|```/g, "");
+
               // Store response in sessionStorage
               storeInSession(responseId, {
-                code: data.response,
+                code: cleanCode,
                 timestamp: new Date().toISOString(),
               });
 
-              // Update AI response in chat with first 5 lines of code
+              // Update AI response in chat
               const loadingResponse = messageElement.querySelector(
                 "#ai-response-loading"
               );
-              const truncatedCode = getTruncatedCode(data.response);
-
               loadingResponse.innerHTML = `
-                <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-0.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
-                  <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}', true)">
+                <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                  <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
                     <p class="text-sm">Code generated</p>
                     <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
@@ -938,20 +943,32 @@
                 </div>
               `;
 
-              // Update the output area with the latest code
+              // Update all code displays
+              // 1. Code editor
+              const codeEditor = document.getElementById("codeEditor");
+              codeEditor.value = cleanCode;
+
+              // 2. Code display with syntax highlighting
               const codeElement = document.querySelector("#codeContent code");
-              const cleanCode = data.response.replace(/```html\n|```/g, "");
               codeElement.textContent = cleanCode;
               codeElement.className = "language-html";
               Prism.highlightElement(codeElement);
 
-              // Show code view and update preview
-              document.getElementById("codeContent").classList.remove("hidden");
-              document.getElementById("previewContent").classList.add("hidden");
+              // 3. Preview iframe
               updatePreviewIframe(cleanCode);
 
-              // Store the latest response ID
+              // 4. Update original code reference
+              originalCode = cleanCode;
+
+              // Show code view
+              document.getElementById("codeContent").classList.remove("hidden");
+              document.getElementById("previewContent").classList.add("hidden");
+
+              // Store as current response
               sessionStorage.setItem("lastResponseId", responseId);
+
+              // Clear input
+              messageInput.value = "";
             } catch (error) {
               console.error("Error:", error);
               const loadingResponse = messageElement.querySelector(
@@ -964,7 +981,7 @@
               `;
             }
 
-            // Scroll to bottom after response
+            // Scroll to bottom
             historyDiv.scrollTop = historyDiv.scrollHeight;
           }
         }
@@ -1250,9 +1267,10 @@
         codeElement.innerHTML = loadingAnimation;
 
         previewButton.addEventListener("click", () => {
+          const currentCode = document.getElementById("codeEditor").value;
+          updatePreviewIframe(currentCode);
           previewContent.classList.remove("hidden");
           codeContent.classList.add("hidden");
-          updatePreviewWithEditedCode();
         });
 
         codeButton.addEventListener("click", () => {
@@ -1272,7 +1290,7 @@
           newWindow.document.close();
         });
 
-        // Update showHistoricalResponse to use the clean code directly
+        // Update showHistoricalResponse to handle preview correctly
         function showHistoricalResponse(responseId) {
           const sessionData = JSON.parse(
             sessionStorage.getItem(`response_${responseId}`)
@@ -1283,9 +1301,14 @@
           originalCode = sessionData.code; // Store original code
           codeEditor.value = originalCode; // Set editor content
 
-          // Show code view and update preview
-          document.getElementById("codeContent").classList.remove("hidden");
-          document.getElementById("previewContent").classList.add("hidden");
+          // Update code view
+          const codeElement = document.querySelector("#codeContent code");
+          codeElement.textContent = originalCode;
+          codeElement.className = "language-html";
+          Prism.highlightElement(codeElement);
+
+          // Update preview with the historical code
+          updatePreviewIframe(originalCode);
 
           // If there's an image, update the preview
           if (sessionData.imageUrl) {
@@ -1294,6 +1317,9 @@
               imagePreview.src = sessionData.imageUrl;
             }
           }
+
+          // Store this as the current response ID
+          sessionStorage.setItem("lastResponseId", responseId);
         }
 
         // Add this to your window load event or initialization code
@@ -1340,6 +1366,32 @@
         // Function to update the preview with edited code
         function updatePreviewWithEditedCode() {
           const editedCode = document.getElementById("codeEditor").value;
+
+          // Add check to see if code has actually changed
+          if (editedCode === originalCode) {
+            // Show a message that no changes were made
+            const toast = document.createElement("div");
+            toast.className =
+              "fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center";
+            toast.innerHTML = `
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              No changes to apply
+            `;
+            document.body.appendChild(toast);
+
+            // Remove toast after 2 seconds
+            setTimeout(() => {
+              toast.classList.add("opacity-0");
+              setTimeout(() => {
+                toast.remove();
+              }, 300);
+            }, 2000);
+
+            return;
+          }
+
           updatePreviewIframe(editedCode);
 
           // Show confirmation feedback
@@ -1391,38 +1443,6 @@
           document.getElementById("codeEditor").value = originalCode;
           updatePreviewWithEditedCode();
         }
-
-        // Update showHistoricalResponse to work with the code editor
-        function showHistoricalResponse(responseId) {
-          const sessionData = JSON.parse(
-            sessionStorage.getItem(`response_${responseId}`)
-          );
-          if (!sessionData) return;
-
-          const codeEditor = document.getElementById("codeEditor");
-          originalCode = sessionData.code; // Store original code
-          codeEditor.value = originalCode; // Set editor content
-
-          // Show code view and update preview
-          document.getElementById("codeContent").classList.remove("hidden");
-          document.getElementById("previewContent").classList.add("hidden");
-
-          // If there's an image, update the preview
-          if (sessionData.imageUrl) {
-            const imagePreview = document.getElementById("imagePreview");
-            if (imagePreview) {
-              imagePreview.src = sessionData.imageUrl;
-            }
-          }
-        }
-
-        // Add event listeners for new buttons
-        document
-          .getElementById("applyChanges")
-          .addEventListener("click", updatePreviewWithEditedCode);
-        document
-          .getElementById("resetCode")
-          .addEventListener("click", resetCode);
       </script>
 
       <style>
