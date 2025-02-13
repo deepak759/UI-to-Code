@@ -228,6 +228,26 @@
                       Code
                     </button>
                     <button
+                      id="copyButton"
+                      class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      title="Copy code"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                        />
+                      </svg>
+                      Copy
+                    </button>
+                    <button
                       id="newTabButton"
                       class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg transition-colors"
                     >
@@ -809,10 +829,10 @@
 
               loadingResponse.innerHTML = `
                 <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-0.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
-                  <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                  <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}', true)">
                     <p class="text-sm">Code generated</p>
-                    <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                    <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
                     </svg>
                   </div>
                 </div>
@@ -893,7 +913,7 @@
 
                 // Create and append the image message
                 const messageElement = document.createElement("div");
-              
+
                 messageElement.innerHTML = `
                   <div class="flex flex-col  space-y-2">
                     <div class="flex mb-3 justify-end">
@@ -986,10 +1006,10 @@
 
                   loadingResponse.innerHTML = `
                     <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
-                      <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                      <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}', true)">
                         <p class="text-sm">Code generated</p>
-                        <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                        <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
                         </svg>
                       </div>
                     </div>
@@ -1146,14 +1166,14 @@
           newWindow.document.close();
         });
 
-        // Update showHistoricalResponse to maintain the latest code in output
-        function showHistoricalResponse(responseId) {
+        // Update showHistoricalResponse to always show the clicked response
+        function showHistoricalResponse(responseId, keepLatest = false) {
           const sessionData = JSON.parse(
             sessionStorage.getItem(`response_${responseId}`)
           );
           if (!sessionData) return;
 
-          // Update code view with the historical code
+          // Remove the keepLatest check so it always shows the clicked response
           const codeElement = document.querySelector("#codeContent code");
           const cleanCode = sessionData.code.replace(/```html\n|```/g, "");
           codeElement.textContent = cleanCode;
@@ -1182,6 +1202,35 @@
             showHistoricalResponse(lastResponseId);
           }
         });
+
+        // Copy button functionality
+        document
+          .getElementById("copyButton")
+          .addEventListener("click", async () => {
+            const codeElement = document.querySelector("#codeContent code");
+            const textToCopy = codeElement.textContent;
+
+            try {
+              await navigator.clipboard.writeText(textToCopy);
+
+              // Visual feedback
+              const copyButton = document.getElementById("copyButton");
+              const originalContent = copyButton.innerHTML;
+              copyButton.innerHTML = `
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Copied!
+            `;
+
+              // Reset button after 2 seconds
+              setTimeout(() => {
+                copyButton.innerHTML = originalContent;
+              }, 2000);
+            } catch (err) {
+              console.error("Failed to copy text:", err);
+            }
+          });
       </script>
 
       <style>
