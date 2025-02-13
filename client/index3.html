@@ -1269,6 +1269,49 @@
         function updatePreviewWithEditedCode() {
           const editedCode = document.getElementById("codeEditor").value;
           updatePreviewIframe(editedCode);
+
+          // Show confirmation feedback
+          const applyButton = document.getElementById("applyChanges");
+          const originalContent = applyButton.innerHTML;
+
+          // Change button to show success state
+          applyButton.innerHTML = `
+            <span class="flex items-center">
+              <svg class="w-5 h-5 mr-1 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Changes Applied
+            </span>
+          `;
+          applyButton.classList.remove("bg-green-600", "hover:bg-green-700");
+          applyButton.classList.add("bg-green-500");
+
+          // Add a temporary toast notification
+          const toast = document.createElement("div");
+          toast.className =
+            "fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center";
+          toast.innerHTML = `
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Changes applied successfully!
+          `;
+          document.body.appendChild(toast);
+
+          // Animate toast in
+          setTimeout(() => {
+            toast.classList.add("opacity-0");
+            setTimeout(() => {
+              toast.remove();
+            }, 300);
+          }, 2000);
+
+          // Reset button after 1.5 seconds
+          setTimeout(() => {
+            applyButton.innerHTML = originalContent;
+            applyButton.classList.remove("bg-green-500");
+            applyButton.classList.add("bg-green-600", "hover:bg-green-700");
+          }, 1500);
         }
 
         // Function to reset code to original
@@ -1379,6 +1422,33 @@
         #codeEditor:focus {
           outline: none;
           border-color: #3b82f6;
+        }
+
+        /* Toast animation */
+        @keyframes slideIn {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        /* Button transition */
+        #applyChanges {
+          transition: all 0.3s ease;
+        }
+
+        /* Toast base styles */
+        .fixed {
+          animation: slideIn 0.3s ease forwards;
+        }
+
+        .fixed.opacity-0 {
+          transform: translateY(100%);
+          transition: all 0.3s ease;
         }
       </style>
     </div>
