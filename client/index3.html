@@ -106,6 +106,50 @@
             </p>
           </div>
 
+          <!-- Add this before the file upload div -->
+          <div class="mb-8">
+            <div
+              class="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50"
+            >
+              <h3 class="text-xl font-semibold text-gray-200 mb-4">
+                Describe Your UI
+              </h3>
+              <textarea
+                id="uiDescription"
+                class="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-4 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 min-h-[100px]"
+                placeholder="Describe the UI you want to create (e.g., 'Create a modern landing page with a hero section, features grid, and contact form')"
+              ></textarea>
+              <div class="mt-4 flex justify-end">
+                <button
+                  id="generateFromPrompt"
+                  class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center gap-2"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  Generate from Description
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add OR divider -->
+          <div class="flex items-center mb-8">
+            <div class="flex-1 border-t border-gray-700"></div>
+            <span class="px-4 text-gray-400 text-lg">OR</span>
+            <div class="flex-1 border-t border-gray-700"></div>
+          </div>
+
           <div
             class="border-2 border-dashed border-gray-600/50 rounded-xl p-10 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
             id="uploadContainer"
@@ -800,21 +844,17 @@
 
         // Update the storeInSession function to clean the code before storing
         function storeInSession(responseId, data) {
-          // Clean the code to extract only the HTML content
-          let cleanCode = data.code;
-          if (data.code.includes("```html")) {
-            cleanCode = data.code.match(/```html\n([\s\S]*?)\n```/)[1];
+          try {
+            sessionStorage.setItem(
+              `response_${responseId}`,
+              JSON.stringify({
+                code: data.code,
+                timestamp: data.timestamp,
+              })
+            );
+          } catch (error) {
+            console.error("Error storing in session:", error);
           }
-
-          const sessionData = {
-            code: cleanCode,
-            imageUrl: data.imageUrl,
-            timestamp: new Date().toISOString(),
-          };
-          sessionStorage.setItem(
-            `response_${responseId}`,
-            JSON.stringify(sessionData)
-          );
         }
 
         // Modify the getTruncatedCode function to show first 5 lines
@@ -826,26 +866,46 @@
           return firstFiveLines + (lines.length > 5 ? "\n..." : "");
         }
 
-        // Modify the sendMessage function's response handling
+        // Function to optimize conversation history
+        function optimizeHistory(history) {
+          return history.slice(-5).map((msg) => {
+            // For messages with code, only keep the last 1000 characters
+            if (msg.role === "assistant" && msg.content.length > 1000) {
+              return {
+                ...msg,
+                content: msg.content.slice(-1000),
+              };
+            }
+            return msg;
+          });
+        }
+
+        // Update the sendMessage function
         async function sendMessage() {
           const messageInput = document.getElementById("messageInput");
           const message = messageInput.value.trim();
           const historyDiv = document.getElementById("imageHistory");
+          const codeElement = document.querySelector("#codeContent code");
 
           if (message) {
             // Create and append user message immediately
             const messageElement = document.createElement("div");
-            messageElement.className = "";
             messageElement.innerHTML = `
               <div class="flex flex-col space-y-2">
-                <div class="flex justify-end">
-                  <div class="bg-gray-600 text-white rounded-2xl py-0.5 px-3 max-w-[80%]" data-role="user" data-type="text">
+                <div class="flex mb-3 justify-end">
+                  <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="text">
                     <p class="text-sm">${message}</p>
                   </div>
                 </div>
                 <div class="flex justify-start" id="ai-response-loading">
-                  <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-2xl py-0.5 px-3 max-w-[80%]">
-                    <p class="text-sm">Thinking...</p>
+                  <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p class="text-sm">Generating UI code...</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -853,53 +913,50 @@
             historyDiv.appendChild(messageElement);
             historyDiv.scrollTop = historyDiv.scrollHeight;
 
-            // Collect all messages from chat history
-            const historyMessages = Array.from(historyDiv.children)
-              .map((el) => {
-                const userMsg = el.querySelector('[data-role="user"]');
-                const aiMsg = el.querySelector('[data-role="assistant"]');
-                const messages = [];
-
-                if (userMsg) {
-                  messages.push({
-                    role: "user",
-                    type: userMsg.dataset.type || "text",
-                    content: userMsg.querySelector(".text-sm").textContent,
-                  });
-                }
-                if (
-                  aiMsg &&
-                  !aiMsg
-                    .querySelector(".text-sm")
-                    .textContent.includes("Thinking...")
-                ) {
-                  messages.push({
-                    role: "assistant",
-                    type: "text",
-                    content: aiMsg.querySelector(".text-sm").textContent,
-                  });
-                }
-                return messages;
-              })
-              .flat();
-
-            // Add the current code if it exists
-            const currentCode =
-              document.querySelector("#codeContent code")?.textContent;
-            if (currentCode) {
-              historyMessages.push({
-                role: "assistant",
-                type: "code",
-                content: currentCode,
-              });
-            }
-
-            // Clear input after sending
+            // Clear input
             messageInput.value = "";
 
+            // Show loading state in code view
+            codeElement.innerHTML = loadingAnimation;
+            document.getElementById("codeContent").classList.remove("hidden");
+            document.getElementById("previewContent").classList.add("hidden");
+
+            // Disable input while generating
+            disableInput();
+
             try {
-              // Get the current code from the editor
-              const currentCode = document.getElementById("codeEditor").value;
+              // Collect conversation history
+              const historyMessages = Array.from(historyDiv.children)
+                .map((el) => {
+                  const userMsg = el.querySelector('[data-role="user"]');
+                  const aiMsg = el.querySelector('[data-role="assistant"]');
+                  let messages = [];
+
+                  if (userMsg) {
+                    messages.push({
+                      role: "user",
+                      type: userMsg.dataset.type || "text",
+                      content: userMsg.querySelector(".text-sm").textContent,
+                    });
+                  }
+                  if (aiMsg && aiMsg.dataset.responseId) {
+                    const storedResponse = sessionStorage.getItem(
+                      `response_${aiMsg.dataset.responseId}`
+                    );
+                    if (storedResponse) {
+                      messages.push({
+                        role: "assistant",
+                        type: "text",
+                        content: JSON.parse(storedResponse).code,
+                      });
+                    }
+                  }
+                  return messages;
+                })
+                .flat();
+
+              // Optimize history before sending
+              const optimizedHistory = optimizeHistory(historyMessages);
 
               const response = await fetch(
                 "http://localhost:3000/api/generate",
@@ -910,28 +967,34 @@
                   },
                   body: JSON.stringify({
                     message: message,
-                    currentCode: currentCode, // Send current code to the API
-                    history: JSON.stringify(historyMessages),
+                    history: JSON.stringify(optimizedHistory),
                   }),
                 }
               );
 
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
               const data = await response.json();
-              const responseId = Date.now().toString();
 
-              // Clean the received code
-              const cleanCode = data.response.replace(/```html\n|```/g, "");
+              if (data.error) {
+                throw new Error(data.error);
+              }
 
-              // Store response in sessionStorage
-              storeInSession(responseId, {
-                code: cleanCode,
-                timestamp: new Date().toISOString(),
-              });
-
-              // Update AI response in chat
+              // Update the response in chat
               const loadingResponse = messageElement.querySelector(
                 "#ai-response-loading"
               );
+              const responseId = Date.now().toString();
+
+              // Store response in session storage
+              storeInSession(responseId, {
+                code: data.response,
+                timestamp: new Date().toISOString(),
+              });
+
+              // Update AI response
               loadingResponse.innerHTML = `
                 <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
                   <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
@@ -943,46 +1006,44 @@
                 </div>
               `;
 
-              // Update all code displays
-              // 1. Code editor
+              // Update the code display
+              const cleanCode = data.response.replace(/```html\n|```/g, "");
+
+              // Update code editor
               const codeEditor = document.getElementById("codeEditor");
               codeEditor.value = cleanCode;
 
-              // 2. Code display with syntax highlighting
-              const codeElement = document.querySelector("#codeContent code");
+              // Update syntax highlighting
               codeElement.textContent = cleanCode;
               codeElement.className = "language-html";
               Prism.highlightElement(codeElement);
 
-              // 3. Preview iframe
+              // Update preview
               updatePreviewIframe(cleanCode);
-
-              // 4. Update original code reference
-              originalCode = cleanCode;
-
-              // Show code view
-              document.getElementById("codeContent").classList.remove("hidden");
-              document.getElementById("previewContent").classList.add("hidden");
 
               // Store as current response
               sessionStorage.setItem("lastResponseId", responseId);
 
-              // Clear input
-              messageInput.value = "";
+              // Enable input after successful generation
+              enableInput();
             } catch (error) {
               console.error("Error:", error);
               const loadingResponse = messageElement.querySelector(
                 "#ai-response-loading"
               );
               loadingResponse.innerHTML = `
-                <div class="bg-gray-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
-                  <p class="text-sm">Sorry, there was an error processing your request.</p>
+                <div class="bg-red-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
+                  <p class="text-sm">Sorry, there was an error generating the UI code: ${error.message}</p>
                 </div>
               `;
-            }
 
-            // Scroll to bottom
-            historyDiv.scrollTop = historyDiv.scrollHeight;
+              // Clear loading state in code view
+              codeElement.textContent =
+                "Error generating code. Please try again.";
+
+              // Enable input even if there's an error
+              enableInput();
+            }
           }
         }
 
@@ -1099,10 +1160,13 @@
                   })
                   .flat();
 
+                // Optimize history before sending
+                const optimizedHistory = optimizeHistory(historyMessages);
+
                 // Create FormData and append the file and history
                 const formData = new FormData();
                 formData.append("image", this.files[0]);
-                formData.append("history", JSON.stringify(historyMessages));
+                formData.append("history", JSON.stringify(optimizedHistory));
 
                 try {
                   // Make API request
@@ -1443,6 +1507,199 @@
           document.getElementById("codeEditor").value = originalCode;
           updatePreviewWithEditedCode();
         }
+
+        // Add event listener for reset button
+        document
+          .getElementById("resetCode")
+          .addEventListener("click", function () {
+            const codeEditor = document.getElementById("codeEditor");
+            codeEditor.value = originalCode;
+
+            // Update the preview with original code
+            updatePreviewIframe(originalCode);
+
+            // Update syntax highlighting in code view
+            const codeElement = document.querySelector("#codeContent code");
+            codeElement.textContent = originalCode;
+            codeElement.className = "language-html";
+            Prism.highlightElement(codeElement);
+          });
+
+        // Add these functions to manage input state
+        function disableInput() {
+          const messageInput = document.getElementById("messageInput");
+          const sendButton = document.getElementById("sendButton");
+          messageInput.disabled = true;
+          messageInput.placeholder =
+            "Please wait while code is being generated...";
+          sendButton.disabled = true;
+          sendButton.classList.add("opacity-50", "cursor-not-allowed");
+        }
+
+        function enableInput() {
+          const messageInput = document.getElementById("messageInput");
+          const sendButton = document.getElementById("sendButton");
+          messageInput.disabled = false;
+          messageInput.placeholder = "Type your message here...";
+          sendButton.disabled = false;
+          sendButton.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+
+        // Update the generateFromPrompt event listener to use optimized history
+        document
+          .getElementById("generateFromPrompt")
+          .addEventListener("click", async function () {
+            // Clear session storage when starting fresh
+            sessionStorage.clear();
+
+            const uiDescription = document
+              .getElementById("uiDescription")
+              .value.trim();
+
+            if (!uiDescription) {
+              alert("Please describe your UI before generating.");
+              return;
+            }
+
+            // Clear any existing content
+            const historyDiv = document.getElementById("imageHistory");
+            historyDiv.innerHTML = "";
+
+            // Clear code editor and preview
+            const codeEditor = document.getElementById("codeEditor");
+            codeEditor.value = "";
+            const codeElement = document.querySelector("#codeContent code");
+            codeElement.textContent = "";
+
+            // Clear preview iframe
+            const previewContent = document.getElementById("previewContent");
+            previewContent.innerHTML = "";
+
+            // Show chat interface and hide upload container
+            document.getElementById("chatInterface").classList.remove("hidden");
+            document.getElementById("imageUpload").classList.add("hidden");
+            document.getElementById("contentSection").classList.add("hidden");
+
+            // Show loading state in code view
+            codeElement.innerHTML = loadingAnimation;
+            codeContent.classList.remove("hidden");
+            previewContent.classList.add("hidden");
+
+            // Disable input while generating
+            disableInput();
+
+            try {
+              // Add to chat history immediately
+              const messageElement = document.createElement("div");
+              messageElement.innerHTML = `
+              <div class="flex flex-col space-y-2">
+                <div class="flex mb-3 justify-end">
+                  <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="text">
+                    <p class="text-sm">${uiDescription}</p>
+                  </div>
+                </div>
+                <div class="flex justify-start" id="ai-response-loading">
+                  <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p class="text-sm">Generating UI code...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+              historyDiv.appendChild(messageElement);
+              historyDiv.scrollTop = historyDiv.scrollHeight;
+
+              const response = await fetch(
+                "http://localhost:3000/api/generate",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    uiDescription: uiDescription,
+                    history: JSON.stringify([]), // Empty array for initial prompt
+                  }),
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              const data = await response.json();
+
+              if (data.error) {
+                throw new Error(data.error);
+              }
+
+              // Update the response in chat
+              const loadingResponse = messageElement.querySelector(
+                "#ai-response-loading"
+              );
+              const responseId = Date.now().toString();
+
+              // Store response in session storage
+              storeInSession(responseId, {
+                code: data.response,
+                timestamp: new Date().toISOString(),
+              });
+
+              // Update AI response
+              loadingResponse.innerHTML = `
+              <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
+                <div class="flex items-center justify-between cursor-pointer hover:bg-gray-600/50 p-2 rounded transition-colors" onclick="showHistoricalResponse('${responseId}')">
+                  <p class="text-sm">Code generated</p>
+                  <svg class="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3L3 21M21 3h-8M21 3v8M3 21h8M3 21v-8"/>
+                  </svg>
+                </div>
+              </div>
+            `;
+
+              // Update the code display
+              const cleanCode = data.response.replace(/```html\n|```/g, "");
+
+              // Update code editor
+              codeEditor.value = cleanCode;
+
+              // Update syntax highlighting
+              codeElement.textContent = cleanCode;
+              codeElement.className = "language-html";
+              Prism.highlightElement(codeElement);
+
+              // Update preview
+              updatePreviewIframe(cleanCode);
+
+              // Store as current response
+              sessionStorage.setItem("lastResponseId", responseId);
+
+              // Enable input after successful generation
+              enableInput();
+            } catch (error) {
+              console.error("Error:", error);
+              const loadingResponse = messageElement.querySelector(
+                "#ai-response-loading"
+              );
+              loadingResponse.innerHTML = `
+              <div class="bg-red-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
+                <p class="text-sm">Sorry, there was an error generating the UI code: ${error.message}</p>
+              </div>
+            `;
+
+              // Clear loading state in code view
+              codeElement.textContent =
+                "Error generating code. Please try again.";
+
+              // Enable input even if there's an error
+              enableInput();
+            }
+          });
       </script>
 
       <style>

@@ -8,7 +8,8 @@ require("dotenv").config();
 const fs = require("fs").promises;
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
 
 // Configure multer for handling file uploads
@@ -58,16 +59,48 @@ async function getPexelsImageUrl(query) {
 app.post("/api/generate", upload.single("image"), async (req, res) => {
   try {
     const userMessage = req.body.message || "";
+    const uiDescription = req.body.uiDescription || "";
     const conversationHistory = req.body.history
       ? JSON.parse(req.body.history)
       : [];
 
     let prompt;
+    let parts = [];
 
+    // New Case: Initial UI description without image
+    if (uiDescription && !req.file && conversationHistory.length === 0) {
+      prompt = `Create responsive HTML + CSS code for the following UI description:
+${uiDescription}
+
+Requirements:
+- Create modern, responsive HTML and CSS code
+- Use semantic HTML5 elements
+- Include all necessary styling inline or in a style tag
+- Make it visually appealing and professional
+- Ensure mobile responsiveness
+- Use modern CSS features and flexbox/grid layouts where appropriate
+
+Please provide the complete code wrapped in \`\`\`html code blocks.`;
+
+      parts = [prompt];
+    }
     // Case 1: Initial image upload (no history)
-    if (req.file && conversationHistory.length === 0) {
+    else if (req.file && conversationHistory.length === 0) {
       prompt =
         "Create responsive HTML + CSS code that matches this UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
+
+      // Add image to parts
+      const imageBuffer = await fs.readFile(req.file.path);
+      const imageBase64 = imageBuffer.toString("base64");
+      parts = [
+        prompt,
+        {
+          inlineData: {
+            mimeType: req.file.mimetype,
+            data: imageBase64,
+          },
+        },
+      ];
     }
     // Case 2: Text message with history (code modification request)
     else if (!req.file && conversationHistory.length > 0) {
@@ -82,7 +115,6 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
         .join("\n\n");
 
       // Find the code that needs to be modified
-      // This could be either the last generated code or a specific code referenced by the user
       const targetCode = conversationHistory
         .filter(
           (msg) =>
@@ -102,6 +134,53 @@ ${targetCode || "No previous code found"}
 User's new request: "${userMessage}"
 
 Please modify the code according to the user's request while maintaining the context of the entire conversation. Return the complete updated code wrapped in \`\`\`html code blocks. Ensure all existing functionality is preserved while implementing the requested changes.`;
+
+      // If there's an image in history, add it to parts
+      const lastImage = conversationHistory.find(
+        (msg) =>
+          msg.role === "user" &&
+          msg.type === "image" &&
+          msg.content &&
+          msg.content.imageUrl
+      );
+
+      if (lastImage && lastImage.content.imageUrl) {
+        try {
+          // Extract base64 and MIME type from data URL
+          const matches = lastImage.content.imageUrl.match(
+            /^data:([A-Za-z-+/]+);base64,(.+)$/
+          );
+
+          if (matches && matches.length === 3) {
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+
+            // Validate MIME type is an image type
+            if (mimeType.startsWith("image/")) {
+              parts = [
+                prompt,
+                {
+                  inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data,
+                  },
+                },
+              ];
+            } else {
+              parts = [prompt];
+              console.warn("Invalid MIME type detected:", mimeType);
+            }
+          } else {
+            parts = [prompt];
+            console.warn("Invalid image data URL format");
+          }
+        } catch (error) {
+          console.error("Error processing image data:", error);
+          parts = [prompt];
+        }
+      } else {
+        parts = [prompt];
+      }
     }
     // Case 3: New image upload (with history)
     else if (req.file) {
@@ -118,24 +197,23 @@ Please modify the code according to the user's request while maintaining the con
 ${conversationContext}
 
 Now, create new responsive HTML + CSS code that matches this new UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.`;
+
+      // Add new image to parts
+      const imageBuffer = await fs.readFile(req.file.path);
+      const imageBase64 = imageBuffer.toString("base64");
+      parts = [
+        prompt,
+        {
+          inlineData: {
+            mimeType: req.file.mimetype,
+            data: imageBase64,
+          },
+        },
+      ];
     } else {
       return res.status(400).json({
         error:
-          "Invalid request. Please provide an image or a modification request with history.",
-      });
-    }
-
-    let parts = [prompt];
-
-    // Add image to parts if available (Case 1 and 3)
-    if (req.file) {
-      const imageBuffer = await fs.readFile(req.file.path);
-      const imageBase64 = imageBuffer.toString("base64");
-      parts.push({
-        inlineData: {
-          mimeType: req.file.mimetype,
-          data: imageBase64,
-        },
+          "Invalid request. Please provide an image, UI description, or a modification request with history.",
       });
     }
 
