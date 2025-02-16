@@ -91,162 +91,158 @@
       <script src="https://cdn.tailwindcss.com"></script>
       <div class="p-4">
         <div
-          class="max-w-3xl mx-auto mb-6 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl p-8 border border-gray-700/50"
+          class="max-w-2xl mx-auto mb-6 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl p-6 border border-gray-700/50"
           id="imageUpload"
         >
-          <div class="text-center mb-8">
+          <div class="text-center mb-4">
             <h2
-              class="text-3xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500"
+              class="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500"
             >
               UI to Code Converter
             </h2>
-            <p class="text-gray-400 text-lg font-light">
-              Transform your UI designs into clean, production-ready code with
-              AI
-            </p>
           </div>
 
-          <!-- Add this before the file upload div -->
-          <div class="mb-8">
-            <div
-              class="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50"
+          <!-- Tabs for switching between methods -->
+          <div class="flex gap-2 mb-4">
+            <button
+              id="promptTab"
+              class="flex-1 py-2 px-4 rounded-lg bg-gray-700/50 text-gray-200 hover:bg-gray-600/50 transition-colors text-sm font-medium"
+              onclick="switchTab('prompt')"
             >
-              <h3 class="text-xl font-semibold text-gray-200 mb-4">
-                Describe Your UI
-              </h3>
-              <textarea
-                id="uiDescription"
-                class="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-4 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 min-h-[100px]"
-                placeholder="Describe the UI you want to create (e.g., 'Create a modern landing page with a hero section, features grid, and contact form')"
-              ></textarea>
-              <div class="mt-4 flex justify-end">
-                <button
-                  id="generateFromPrompt"
-                  class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center gap-2"
+              Generate from Text
+            </button>
+            <button
+              id="imageTab"
+              class="flex-1 py-2 px-4 rounded-lg bg-gray-700/50 text-gray-200 hover:bg-gray-600/50 transition-colors text-sm font-medium"
+              onclick="switchTab('image')"
+            >
+              Upload Image
+            </button>
+          </div>
+
+          <!-- Prompt Input Section -->
+          <div id="promptSection" class="space-y-3">
+            <textarea
+              id="uiDescription"
+              class="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-sm min-h-[80px]"
+              placeholder="Describe the UI you want to create (e.g., 'Create a modern landing page with a hero section, features grid, and contact form')"
+            ></textarea>
+            <button
+              id="generateFromPrompt"
+              class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Generate Code
+            </button>
+          </div>
+
+          <!-- Image Upload Section -->
+          <div id="imageSection" class="hidden">
+            <div
+              class="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
+              id="uploadContainer"
+            >
+              <input
+                type="file"
+                id="fileInput"
+                class="hidden"
+                accept="image/*"
+              />
+              <label
+                for="fileInput"
+                class="cursor-pointer block group-hover:scale-105 transition-transform duration-300"
+              >
+                <div
+                  class="bg-gray-700/50 rounded-full p-3 w-16 h-16 mx-auto mb-3 group-hover:bg-blue-500/20 transition-colors"
                 >
                   <svg
-                    class="w-5 h-5"
-                    fill="none"
+                    class="w-full h-full text-gray-400 group-hover:text-blue-400 transition-colors"
                     stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    fill="none"
+                    viewBox="0 0 48 48"
                   >
                     <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
-                  Generate from Description
-                </button>
-              </div>
+                </div>
+                <p class="text-sm font-medium text-gray-300 mb-1">
+                  Drop your UI design here
+                </p>
+                <p class="text-xs text-gray-500">
+                  Supports PNG, JPG, GIF • Max 10MB
+                </p>
+              </label>
             </div>
           </div>
 
-          <!-- Add OR divider -->
-          <div class="flex items-center mb-8">
-            <div class="flex-1 border-t border-gray-700"></div>
-            <span class="px-4 text-gray-400 text-lg">OR</span>
-            <div class="flex-1 border-t border-gray-700"></div>
-          </div>
-
-          <div
-            class="border-2 border-dashed border-gray-600/50 rounded-xl p-10 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
-            id="uploadContainer"
-          >
-            <input type="file" id="fileInput" class="hidden" accept="image/*" />
-            <label
-              for="fileInput"
-              class="cursor-pointer block group-hover:scale-105 transition-transform duration-300"
-            >
-              <div
-                class="bg-gray-700/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 group-hover:bg-blue-500/20 transition-colors"
-              >
-                <svg
-                  class="w-full h-full text-gray-400 group-hover:text-blue-400 transition-colors"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+          <!-- Image Preview Section -->
+          <div id="previewContainer" class="hidden mt-4">
+            <div class="flex gap-4 items-center">
+              <div class="flex-1">
+                <div class="relative group">
+                  <img
+                    id="imagePreview"
+                    class="w-full h-32 object-contain rounded-lg shadow-lg bg-gray-800/50 p-2"
                   />
-                </svg>
-              </div>
-              <p class="text-lg font-medium text-gray-300 mb-2">
-                Drop your UI design here
-              </p>
-              <p class="text-sm text-gray-500">
-                Supports PNG, JPG, GIF • Max 10MB
-              </p>
-            </label>
-          </div>
-
-          <!-- New container for side-by-side layout -->
-          <div id="previewContainer" class="hidden">
-            <div class="flex gap-6 items-center mb-8">
-              <div class="w-1/2">
-                <img
-                  id="imagePreview"
-                  class="w-full h-64 object-contain rounded-lg shadow-xl bg-gray-800/50 p-4"
-                />
-              </div>
-              <div class="w-1/2">
-                <div
-                  class="border-2 border-dashed border-gray-600/50 rounded-xl p-8 text-center hover:border-blue-500/70 transition-all duration-300 bg-gray-800/50 backdrop-blur-sm group"
-                >
                   <label
                     for="fileInput"
-                    class="cursor-pointer block group-hover:scale-105 transition-transform duration-300"
+                    class="absolute inset-0 bg-gray-900/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer rounded-lg"
                   >
-                    <div
-                      class="bg-gray-700/50 rounded-full p-4 w-16 h-16 mx-auto mb-4 group-hover:bg-blue-500/20 transition-colors"
-                    >
+                    <div class="text-center">
                       <svg
-                        class="w-full h-full text-gray-400 group-hover:text-blue-400 transition-colors"
-                        stroke="currentColor"
+                        class="w-6 h-6 text-gray-300 mx-auto mb-1"
                         fill="none"
-                        viewBox="0 0 48 48"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
                         <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                          stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                         />
                       </svg>
+                      <span class="text-xs text-gray-300"
+                        >Choose new image</span
+                      >
                     </div>
-                    <p class="text-base font-medium text-gray-300">
-                      Choose different image
-                    </p>
                   </label>
                 </div>
               </div>
-            </div>
-            <div class="flex justify-center">
               <button
                 id="analyzeButton"
-                class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
+                class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm flex items-center gap-2"
               >
-                <span class="flex items-center gap-2">
-                  <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                  Convert to Code
-                </span>
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Generate Code
               </button>
             </div>
           </div>
@@ -1700,6 +1696,39 @@
               enableInput();
             }
           });
+
+        // Add this script for tab switching
+        function switchTab(tab) {
+          const promptSection = document.getElementById("promptSection");
+          const imageSection = document.getElementById("imageSection");
+          const promptTab = document.getElementById("promptTab");
+          const imageTab = document.getElementById("imageTab");
+
+          if (tab === "prompt") {
+            promptSection.classList.remove("hidden");
+            imageSection.classList.add("hidden");
+            document.getElementById("previewContainer").classList.add("hidden");
+            promptTab.classList.add("bg-blue-600", "hover:bg-blue-700");
+            promptTab.classList.remove(
+              "bg-gray-700/50",
+              "hover:bg-gray-600/50"
+            );
+            imageTab.classList.remove("bg-blue-600", "hover:bg-blue-700");
+            imageTab.classList.add("bg-gray-700/50", "hover:bg-gray-600/50");
+          } else {
+            promptSection.classList.add("hidden");
+            imageSection.classList.remove("hidden");
+            imageTab.classList.add("bg-blue-600", "hover:bg-blue-700");
+            imageTab.classList.remove("bg-gray-700/50", "hover:bg-gray-600/50");
+            promptTab.classList.remove("bg-blue-600", "hover:bg-blue-700");
+            promptTab.classList.add("bg-gray-700/50", "hover:bg-gray-600/50");
+          }
+        }
+
+        // Set prompt tab as active by default
+        document.addEventListener("DOMContentLoaded", () => {
+          switchTab("prompt");
+        });
       </script>
 
       <style>
