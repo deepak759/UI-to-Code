@@ -253,7 +253,28 @@
             <div
               class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-[calc(100vh-7rem)] flex flex-col"
             >
-              <h3 class="text-lg font-semibold mb-3 !text-gray-100">History</h3>
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold !text-gray-100">History</h3>
+                <button
+                  id="newChatButton"
+                  class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  New Chat
+                </button>
+              </div>
               <div
                 class="space-y-2 overflow-y-auto flex-1 scrollbar-custom"
                 id="imageHistory"
@@ -1729,6 +1750,45 @@
         document.addEventListener("DOMContentLoaded", () => {
           switchTab("prompt");
         });
+
+        // New Chat functionality
+        document
+          .getElementById("newChatButton")
+          .addEventListener("click", function () {
+            // Clear chat history
+            document.getElementById("imageHistory").innerHTML = "";
+
+            // Clear code editor and preview
+            document.getElementById("codeEditor").value = "";
+            document.querySelector("#codeContent code").textContent = "";
+            document.getElementById("previewContent").innerHTML = "";
+
+            // Clear session storage
+            sessionStorage.clear();
+
+            // Enable input fields
+            enableInput();
+
+            // Show success toast
+            const toast = document.createElement("div");
+            toast.className =
+              "fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center";
+            toast.innerHTML = `
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Started new chat session
+          `;
+            document.body.appendChild(toast);
+
+            // Remove toast after 2 seconds
+            setTimeout(() => {
+              toast.classList.add("opacity-0");
+              setTimeout(() => {
+                toast.remove();
+              }, 300);
+            }, 2000);
+          });
       </script>
 
       <style>
