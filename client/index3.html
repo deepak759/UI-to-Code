@@ -254,7 +254,7 @@
               class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-[calc(100vh-7rem)] flex flex-col"
             >
               <div class="flex justify-between items-center mb-3">
-                <h3 class="text-lg font-semibold !text-gray-100">History</h3>
+                <h3 class="text-lg font-semibold !text-gray-100">chats</h3>
                 <button
                   id="newChatButton"
                   class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
@@ -281,11 +281,76 @@
               >
                 <!-- Image history items will be added here -->
               </div>
+
+              <!-- Move the message input section here -->
+              <div
+                class="!bg-gray-800 !rounded-lg mt-3 border-t border-gray-700/50 pt-3"
+              >
+                <div class="flex justify-between items-center gap-3">
+                  <div
+                    class="flex-1 flex !bg-gray-700 border border-gray-600/50 !text-gray-100 !rounded-2xl focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-transparent transition-all duration-200"
+                  >
+                    <input
+                      type="text"
+                      id="messageInput"
+                      class="w-full !bg-gray-700 border-0 !text-gray-100 px-4 py-2 text-sm placeholder-gray-400 focus:outline-none !rounded-l-2xl focus:ring-0"
+                      placeholder="Type your message here..."
+                    />
+                    <div class="flex items-center p-1">
+                      <button
+                        id="newImageButton"
+                        class="bg-gray-600/50 hover:bg-gray-500/50 text-gray-300 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Upload new image"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    id="sendButton"
+                    class="bg-gray-600/50 hover:bg-gray-500/50 text-blue-400 rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      class="w-5 h-5 transform rotate-45"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    type="file"
+                    id="newFileInput"
+                    class="hidden"
+                    accept="image/*"
+                  />
+                </div>
+              </div>
             </div>
 
             <div class="w-3/4 space-y-3">
               <div
-                class="bg-gray-800 rounded-lg shadow-lg p-6 h-[calc(100vh-12rem)] overflow-y-auto scrollbar-custom"
+                class="bg-gray-800 rounded-lg shadow-lg p-6 h-[calc(100vh-7rem)] overflow-y-auto scrollbar-custom"
               >
                 <div class="flex justify-between items-center">
                   <div class="">
@@ -392,49 +457,6 @@
                       ><code class="language-html"></code></pre>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div class="!bg-gray-800 !rounded-lg !shadow-lg p-4 py-2">
-                <div class="flex items-center gap-3">
-                  <input
-                    type="text"
-                    id="messageInput"
-                    class="flex-1 !bg-gray-700 border-gray-600 !text-gray-100 !rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                    placeholder="Type your message here..."
-                  />
-                  <button
-                    id="newImageButton"
-                    class="bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
-                    title="Upload new image"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    id="sendButton"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-                  >
-                    Send
-                  </button>
-                  <input
-                    type="file"
-                    id="newFileInput"
-                    class="hidden"
-                    accept="image/*"
-                  />
                 </div>
               </div>
             </div>
@@ -693,6 +715,9 @@
             // Clear session storage when starting fresh
             sessionStorage.clear();
 
+            // Disable input while generating code
+            disableInput();
+
             // Show chat interface and hide upload container
             document.getElementById("chatInterface").classList.remove("hidden");
             document.getElementById("imageUpload").classList.add("hidden");
@@ -800,6 +825,12 @@
                 // Enable message input and send button after code is generated
                 document.getElementById("sendButton").disabled = false;
                 document.getElementById("messageInput").disabled = false;
+
+                // Enable input after successful generation
+                enableInput();
+
+                // Also enable input when showing historical responses
+                showHistoricalResponse(responseId);
               } catch (error) {
                 console.error("Error:", error);
                 codeElement.textContent =
@@ -816,6 +847,9 @@
                     <p class="text-sm">Sorry, there was an error generating the UI code.</p>
                   </div>
                 `;
+
+                // Enable input even if there's an error
+                enableInput();
               }
             }
           });
@@ -1043,6 +1077,9 @@
 
               // Enable input after successful generation
               enableInput();
+
+              // Also enable input when showing historical responses
+              showHistoricalResponse(responseId);
             } catch (error) {
               console.error("Error:", error);
               const loadingResponse = messageElement.querySelector(
@@ -1105,6 +1142,9 @@
               const reader = new FileReader();
               reader.onload = async function (e) {
                 const historyDiv = document.getElementById("imageHistory");
+
+                // Disable input while generating code
+                disableInput();
 
                 // Create and append the image message
                 const messageElement = document.createElement("div");
@@ -1250,6 +1290,12 @@
 
                   // Store the latest response ID
                   sessionStorage.setItem("lastResponseId", responseId);
+
+                  // Enable input after successful generation
+                  enableInput();
+
+                  // Also enable input when showing historical responses
+                  showHistoricalResponse(responseId);
                 } catch (error) {
                   console.error("Error:", error);
                   const loadingResponse = messageElement.querySelector(
@@ -1401,6 +1447,9 @@
 
           // Store this as the current response ID
           sessionStorage.setItem("lastResponseId", responseId);
+
+          // Enable input when showing historical responses
+          enableInput();
         }
 
         // Add this to your window load event or initialization code
@@ -1698,6 +1747,9 @@
 
               // Enable input after successful generation
               enableInput();
+
+              // Also enable input when showing historical responses
+              showHistoricalResponse(responseId);
             } catch (error) {
               console.error("Error:", error);
               const loadingResponse = messageElement.querySelector(
