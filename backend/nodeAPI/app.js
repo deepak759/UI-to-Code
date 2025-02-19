@@ -229,7 +229,7 @@ Now, create new responsive HTML + CSS code that matches this new UI image. Inclu
     function extractHtmlCode(text) {
       // If response contains code blocks, extract the HTML
       if (text.includes("```html")) {
-        const match = text.match(/```html\n([\s\S]*?)\n```/);
+        const match = text.match(/```html\n?([\s\S]*?)\n?```/);
         return match ? match[1].trim() : text;
       }
       // If response starts with <!DOCTYPE or <html, assume it's pure HTML
@@ -239,11 +239,11 @@ Now, create new responsive HTML + CSS code that matches this new UI image. Inclu
       ) {
         return text.trim();
       }
-      // If no code blocks found but contains HTML tags, extract everything between first < and last >
-      if (text.includes("<") && text.includes(">")) {
-        const start = text.indexOf("<");
-        const end = text.lastIndexOf(">") + 1;
-        return text.slice(start, end);
+      // If no code blocks found but contains HTML tags, extract everything between DOCTYPE and closing html tag
+      if (text.includes("<!DOCTYPE") && text.includes("</html>")) {
+        const start = text.indexOf("<!DOCTYPE");
+        const end = text.indexOf("</html>") + 7;
+        return text.slice(start, end).trim();
       }
       return text;
     }
@@ -276,11 +276,6 @@ Now, create new responsive HTML + CSS code that matches this new UI image. Inclu
         const pexelsUrl = await getPexelsImageUrl(searchQuery);
         response = response.replace(originalUrl, pexelsUrl);
       }
-    }
-
-    // Ensure the response is wrapped in code blocks for the frontend
-    if (!response.includes("```html")) {
-      response = "```html\n" + response + "\n```";
     }
 
     res.json({

@@ -794,7 +794,7 @@
                 sessionStorage.setItem("lastResponseId", responseId);
 
                 // Update the code view
-                const cleanCode = data.response.replace(/```html\n|```/g, "");
+                const cleanCode = data.response.trim(); // Simplified since backend now sends clean code
                 codeElement.textContent = cleanCode;
                 codeElement.className = "language-html";
                 Prism.highlightElement(codeElement);
@@ -1058,7 +1058,7 @@
               `;
 
               // Update the code display
-              const cleanCode = data.response.replace(/```html\n|```/g, "");
+              const cleanCode = data.response.trim(); // Simplified since backend now sends clean code
 
               // Update code editor
               const codeEditor = document.getElementById("codeEditor");
@@ -1270,7 +1270,7 @@
                   document.getElementById("newTabButton").disabled = false;
 
                   // Update the output area with the latest code
-                  const cleanCode = data.response.replace(/```html\n|```/g, "");
+                  const cleanCode = data.response.trim(); // Simplified since backend now sends clean code
                   codeElement.textContent = cleanCode;
                   codeElement.className = "language-html";
                   Prism.highlightElement(codeElement);
@@ -1595,20 +1595,32 @@
         function disableInput() {
           const messageInput = document.getElementById("messageInput");
           const sendButton = document.getElementById("sendButton");
+          const newImageButton = document.getElementById("newImageButton");
+
           messageInput.disabled = true;
           messageInput.placeholder =
             "Please wait while code is being generated...";
           sendButton.disabled = true;
           sendButton.classList.add("opacity-50", "cursor-not-allowed");
+
+          // Disable new image button
+          newImageButton.disabled = true;
+          newImageButton.classList.add("opacity-50", "cursor-not-allowed");
         }
 
         function enableInput() {
           const messageInput = document.getElementById("messageInput");
           const sendButton = document.getElementById("sendButton");
+          const newImageButton = document.getElementById("newImageButton");
+
           messageInput.disabled = false;
           messageInput.placeholder = "Type your message here...";
           sendButton.disabled = false;
           sendButton.classList.remove("opacity-50", "cursor-not-allowed");
+
+          // Enable new image button
+          newImageButton.disabled = false;
+          newImageButton.classList.remove("opacity-50", "cursor-not-allowed");
         }
 
         // Update the generateFromPrompt event listener to use optimized history
@@ -1729,7 +1741,7 @@
             `;
 
               // Update the code display
-              const cleanCode = data.response.replace(/```html\n|```/g, "");
+              const cleanCode = data.response.trim(); // Simplified since backend now sends clean code
 
               // Update code editor
               codeEditor.value = cleanCode;
