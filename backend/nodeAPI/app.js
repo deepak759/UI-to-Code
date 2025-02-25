@@ -6,6 +6,8 @@ const { createClient } = require("pexels");
 const multer = require("multer");
 require("dotenv").config();
 const fs = require("fs").promises;
+const https = require("https");
+const axios = require("axios");
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -104,17 +106,7 @@ Please provide the complete code wrapped in \`\`\`html code blocks.`;
     }
     // Case 2: Text message with history (code modification request)
     else if (!req.file && conversationHistory.length > 0) {
-      // Format the complete conversation history for context
-      const conversationContext = conversationHistory
-        .map((msg) => {
-          if (msg.role === "user" && msg.type === "image") {
-            return `${msg.role.toUpperCase()}: [Uploaded Image]`;
-          }
-          return `${msg.role.toUpperCase()}: ${msg.content}`;
-        })
-        .join("\n\n");
-
-      // Find the code that needs to be modified
+      // Find the latest code first
       const targetCode = conversationHistory
         .filter(
           (msg) =>
@@ -125,61 +117,95 @@ Please provide the complete code wrapped in \`\`\`html code blocks.`;
         )
         .pop()?.content;
 
-      prompt = `Complete conversation history for context:
-${conversationContext}
+      // Format conversation history more effectively
+      const conversationContext = conversationHistory
+        .map((msg) => {
+          if (msg.role === "user" && msg.type === "image") {
+            return `${msg.role.toUpperCase()}: [Reference UI Image]`;
+          }
+          return `${msg.role.toUpperCase()}: ${msg.content}`;
+        })
+        .join("\n\n");
 
-Current code to modify:
+      // Improved prompt structure for better consistency
+      prompt = `Current HTML code to modify:
 ${targetCode || "No previous code found"}
 
-User's new request: "${userMessage}"
+User's modification request: "${userMessage}"
 
-Please modify the code according to the user's request while maintaining the context of the entire conversation. Return the complete updated code wrapped in \`\`\`html code blocks. Ensure all existing functionality is preserved while implementing the requested changes.`;
+Requirements:
+- Implement the requested changes while preserving existing functionality
+- Maintain responsive design and visual consistency
+- Keep all existing styling and layout structure
+- Ensure cross-browser compatibility
+- Return complete, updated code
 
-      // If there's an image in history, add it to parts
+Previous conversation context:
+${conversationContext}
+
+Please provide the complete modified code wrapped in \`\`\`html code blocks.`;
+
+      parts = [prompt];
+
+      // Add image context if exists in history
       const lastImage = conversationHistory.find(
-        (msg) =>
-          msg.role === "user" &&
-          msg.type === "image" &&
-          msg.content &&
-          msg.content.imageUrl
+        (msg) => msg.role === "user" && msg.type === "image"
       );
 
       if (lastImage && lastImage.content.imageUrl) {
         try {
-          // Extract base64 and MIME type from data URL
-          const matches = lastImage.content.imageUrl.match(
-            /^data:([A-Za-z-+/]+);base64,(.+)$/
-          );
+          let base64Data;
+          let mimeType;
 
-          if (matches && matches.length === 3) {
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-
-            // Validate MIME type is an image type
-            if (mimeType.startsWith("image/")) {
-              parts = [
-                prompt,
-                {
-                  inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data,
-                  },
-                },
-              ];
-            } else {
-              parts = [prompt];
-              console.warn("Invalid MIME type detected:", mimeType);
+          // Handle different URL types
+          if (lastImage.content.imageUrl.startsWith("data:")) {
+            // Handle data URLs
+            const matches = lastImage.content.imageUrl.match(
+              /^data:([A-Za-z-+/]+);base64,(.+)$/
+            );
+            if (matches && matches.length === 3) {
+              mimeType = matches[1];
+              base64Data = matches[2];
             }
+          } else if (lastImage.content.imageUrl.startsWith("blob:")) {
+            // For blob URLs, we should have received base64 data directly
+            console.log(
+              "Blob URLs should be converted to base64 before sending to backend"
+            );
+            // Skip this image and continue with just the prompt
+            parts = [prompt];
+            return;
+          } else {
+            // Handle regular URLs
+            const response = await axios.get(lastImage.content.imageUrl, {
+              responseType: "arraybuffer",
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+              }),
+            });
+            base64Data = Buffer.from(response.data).toString("base64");
+            mimeType = response.headers["content-type"];
+          }
+
+          // Only add image to parts if we successfully got the data
+          if (base64Data && mimeType) {
+            parts = [
+              prompt,
+              {
+                inlineData: {
+                  mimeType: mimeType,
+                  data: base64Data,
+                },
+              },
+            ];
           } else {
             parts = [prompt];
-            console.warn("Invalid image data URL format");
           }
         } catch (error) {
           console.error("Error processing image data:", error);
+          // Continue with just the prompt if image processing fails
           parts = [prompt];
         }
-      } else {
-        parts = [prompt];
       }
     }
     // Case 3: New image upload (with history)

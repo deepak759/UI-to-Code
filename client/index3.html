@@ -296,10 +296,8 @@
               </div>
 
               <!-- Move the message input section here -->
-              <div
-                class=" !rounded-lg mt-3 border-t border-gray-800/30 pt-3"
-              >
-                <div class="flex   justify-between items-center gap-3">
+              <div class="!rounded-lg mt-3 border-t border-gray-800/30 pt-3">
+                <div class="flex justify-between items-center gap-3">
                   <div
                     class="flex-1 flex !bg-gray-700 border border-gray-800/30 !text-gray-100 !rounded-2xl focus-within:border-transparent transition-all duration-200"
                   >
@@ -977,64 +975,78 @@
 
         // Update the sendMessage function
         async function sendMessage() {
-          const messageInput = document.getElementById("messageInput");
-          const message = messageInput.value.trim();
+          const message = document.getElementById("messageInput").value.trim();
           const historyDiv = document.getElementById("imageHistory");
-          const codeElement = document.querySelector("#codeContent code");
 
           if (message) {
-            // Create and append user message immediately
-            const messageElement = document.createElement("div");
-            messageElement.innerHTML = `
-              <div class="flex flex-col space-y-2">
-                <div class="flex mb-3 justify-end">
-                  <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="text">
-                    <p class="text-sm">${message}</p>
-                  </div>
-                </div>
-                <div class="flex justify-start" id="ai-response-loading">
-                  <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <p class="text-sm">Generating UI code...</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-            historyDiv.appendChild(messageElement);
-            historyDiv.scrollTop = historyDiv.scrollHeight;
-
-            // Clear input
-            messageInput.value = "";
-
-            // Show loading state in code view
-            codeElement.innerHTML = loadingAnimation;
-            document.getElementById("codeContent").classList.remove("hidden");
-            document.getElementById("previewContent").classList.add("hidden");
-
             // Disable input while generating
             disableInput();
 
             try {
-              // Collect conversation history
-              const historyMessages = Array.from(historyDiv.children)
-                .map((el) => {
+              // Create message element first
+              const messageElement = document.createElement("div");
+              messageElement.innerHTML = `
+                <div class="flex flex-col space-y-2">
+                  <div class="flex mb-3 justify-end">
+                    <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="text">
+                      <p class="text-sm">${message}</p>
+                    </div>
+                  </div>
+                  <div class="flex justify-start" id="ai-response-loading">
+                    <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-sm">Generating response...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+
+              // Add message to chat history
+              historyDiv.appendChild(messageElement);
+              historyDiv.scrollTop = historyDiv.scrollHeight;
+
+              // Clear input
+              document.getElementById("messageInput").value = "";
+
+              // Collect all messages from chat history including images
+              const historyMessages = await Promise.all(
+                Array.from(historyDiv.children).map(async (el) => {
                   const userMsg = el.querySelector('[data-role="user"]');
                   const aiMsg = el.querySelector('[data-role="assistant"]');
-                  let messages = [];
+                  const messages = [];
 
                   if (userMsg) {
-                    messages.push({
-                      role: "user",
-                      type: userMsg.dataset.type || "text",
-                      content: userMsg.querySelector(".text-sm").textContent,
-                    });
+                    const type = userMsg.dataset.type || "text";
+                    if (type === "image") {
+                      const img = userMsg.querySelector("img");
+                      if (img) {
+                        let imageUrl = img.src;
+                        // Convert blob URLs to base64
+                        if (imageUrl.startsWith("blob:")) {
+                          imageUrl = await blobUrlToBase64(imageUrl);
+                        }
+                        if (imageUrl) {
+                          messages.push({
+                            role: "user",
+                            type: "image",
+                            content: { imageUrl },
+                          });
+                        }
+                      }
+                    } else {
+                      messages.push({
+                        role: "user",
+                        type: "text",
+                        content: userMsg.querySelector(".text-sm").textContent,
+                      });
+                    }
                   }
-                  if (aiMsg && aiMsg.dataset.responseId) {
+                  if (aiMsg) {
                     const storedResponse = sessionStorage.getItem(
                       `response_${aiMsg.dataset.responseId}`
                     );
@@ -1048,11 +1060,9 @@
                   }
                   return messages;
                 })
-                .flat();
+              ).then((msgs) => msgs.flat());
 
-              // Optimize history before sending
-              const optimizedHistory = optimizeHistory(historyMessages);
-
+              // Make API request with the current message and full history
               const response = await fetch(
                 "http://localhost:3000/api/generate",
                 {
@@ -1062,7 +1072,7 @@
                   },
                   body: JSON.stringify({
                     message: message,
-                    history: JSON.stringify(optimizedHistory),
+                    history: JSON.stringify(historyMessages),
                   }),
                 }
               );
@@ -1072,15 +1082,6 @@
               }
 
               const data = await response.json();
-
-              if (data.error) {
-                throw new Error(data.error);
-              }
-
-              // Update the response in chat
-              const loadingResponse = messageElement.querySelector(
-                "#ai-response-loading"
-              );
               const responseId = Date.now().toString();
 
               // Store response in session storage
@@ -1089,7 +1090,10 @@
                 timestamp: new Date().toISOString(),
               });
 
-              // Update AI response
+              // Update the AI response
+              const loadingResponse = messageElement.querySelector(
+                "#ai-response-loading"
+              );
               loadingResponse.innerHTML = `
                 <div class="bg-gray-700/50 backdrop-blur-sm text-gray-100 rounded-lg py-1.5 px-1 max-w-[80%]" data-role="assistant" data-response-id="${responseId}">
                   <div class="flex items-center justify-between p-2 rounded transition-colors">
@@ -1117,20 +1121,18 @@
                 </div>
               `;
 
-              // Update the code display
-              const cleanCode = data.response.trim(); // Simplified since backend now sends clean code
-
-              // Update code editor
+              // Update code display
               const codeEditor = document.getElementById("codeEditor");
-              codeEditor.value = cleanCode;
+              codeEditor.value = data.response;
 
               // Update syntax highlighting
-              codeElement.textContent = cleanCode;
+              const codeElement = document.querySelector("#codeContent code");
+              codeElement.textContent = data.response;
               codeElement.className = "language-html";
               Prism.highlightElement(codeElement);
 
               // Update preview
-              updatePreviewIframe(cleanCode);
+              updatePreviewIframe(data.response);
 
               // Store as current response
               sessionStorage.setItem("lastResponseId", responseId);
@@ -1147,17 +1149,30 @@
               );
               loadingResponse.innerHTML = `
                 <div class="bg-red-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
-                  <p class="text-sm">Sorry, there was an error generating the UI code: ${error.message}</p>
+                  <p class="text-sm">Sorry, there was an error generating the code: ${error.message}</p>
                 </div>
               `;
-
-              // Clear loading state in code view
-              codeElement.textContent =
-                "Error generating code. Please try again.";
 
               // Enable input even if there's an error
               enableInput();
             }
+          }
+        }
+
+        // Add this helper function
+        async function blobUrlToBase64(blobUrl) {
+          try {
+            const response = await fetch(blobUrl);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          } catch (error) {
+            console.error("Error converting blob URL to base64:", error);
+            return null;
           }
         }
 
@@ -1199,93 +1214,114 @@
           .getElementById("newFileInput")
           .addEventListener("change", async function (e) {
             if (this.files && this.files[0]) {
-              const reader = new FileReader();
-              reader.onload = async function (e) {
-                const historyDiv = document.getElementById("imageHistory");
+              // Disable input while generating code
+              disableInput();
 
-                // Disable input while generating code
-                disableInput();
+              try {
+                const reader = new FileReader();
+                reader.onload = async function (e) {
+                  const historyDiv = document.getElementById("imageHistory");
 
-                // Create and append the image message
-                const messageElement = document.createElement("div");
-                messageElement.innerHTML = `
-                  <div class="flex flex-col space-y-2">
-                    <div class="flex mb-3 justify-end">
-                      <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
-                        <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
-                        <p class="text-sm">New image uploaded</p>
+                  // Create and append the image message
+                  const messageElement = document.createElement("div");
+                  messageElement.innerHTML = `
+                    <div class="flex flex-col space-y-2">
+                      <div class="flex mb-3 justify-end">
+                        <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
+                          <img src="${e.target.result}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
+                          <p class="text-sm">New image uploaded</p>
+                        </div>
+                      </div>
+                      <div class="flex justify-start" id="ai-response-loading">
+                        <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
+                          <p class="text-sm">Generating UI code...</p>
+                        </div>
                       </div>
                     </div>
-                    <div class="flex justify-start" id="ai-response-loading">
-                      <div class="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-[80%]">
-                        <p class="text-sm">Generating UI code...</p>
-                      </div>
-                    </div>
-                  </div>
-                `;
-                historyDiv.appendChild(messageElement);
-                historyDiv.scrollTop = historyDiv.scrollHeight;
+                  `;
+                  historyDiv.appendChild(messageElement);
+                  historyDiv.scrollTop = historyDiv.scrollHeight;
 
-                // Show loading animation in code view
-                const codeElement = document.querySelector("#codeContent code");
-                codeElement.innerHTML = loadingAnimation;
-                document
-                  .getElementById("codeContent")
-                  .classList.remove("hidden");
-                document
-                  .getElementById("previewContent")
-                  .classList.add("hidden");
+                  // Show loading animation in code view
+                  const codeElement =
+                    document.querySelector("#codeContent code");
+                  codeElement.innerHTML = loadingAnimation;
+                  document
+                    .getElementById("codeContent")
+                    .classList.remove("hidden");
+                  document
+                    .getElementById("previewContent")
+                    .classList.add("hidden");
 
-                // Also show loading in the code editor
-                const codeEditor = document.getElementById("codeEditor");
-                codeEditor.value = "Generating code...";
-                codeEditor.disabled = true;
+                  // Also show loading in the code editor
+                  const codeEditor = document.getElementById("codeEditor");
+                  codeEditor.value = "Generating code...";
+                  codeEditor.disabled = true;
 
-                // Disable buttons during loading
-                document.getElementById("applyChanges").disabled = true;
-                document.getElementById("resetCode").disabled = true;
-                document.getElementById("copyButton").disabled = true;
-                document.getElementById("newTabButton").disabled = true;
+                  // Disable buttons during loading
+                  document.getElementById("applyChanges").disabled = true;
+                  document.getElementById("resetCode").disabled = true;
+                  document.getElementById("copyButton").disabled = true;
+                  document.getElementById("newTabButton").disabled = true;
 
-                // Collect all messages from chat history
-                const historyMessages = Array.from(historyDiv.children)
-                  .map((el) => {
-                    const userMsg = el.querySelector('[data-role="user"]');
-                    const aiMsg = el.querySelector('[data-role="assistant"]');
-                    const messages = [];
+                  // Collect all messages from chat history
+                  const historyMessages = await Promise.all(
+                    Array.from(historyDiv.children).map(async (el) => {
+                      const userMsg = el.querySelector('[data-role="user"]');
+                      const aiMsg = el.querySelector('[data-role="assistant"]');
+                      const messages = [];
 
-                    if (userMsg) {
-                      messages.push({
-                        role: "user",
-                        type: userMsg.dataset.type || "text",
-                        content: userMsg.querySelector(".text-sm").textContent,
-                      });
-                    }
-                    if (
-                      aiMsg &&
-                      !aiMsg
-                        .querySelector(".text-sm")
-                        .textContent.includes("Generating UI code...")
-                    ) {
-                      messages.push({
-                        role: "assistant",
-                        type: "text",
-                        content: aiMsg.querySelector(".text-sm").textContent,
-                      });
-                    }
-                    return messages;
-                  })
-                  .flat();
+                      if (userMsg) {
+                        const type = userMsg.dataset.type || "text";
+                        if (type === "image") {
+                          const img = userMsg.querySelector("img");
+                          if (img) {
+                            let imageUrl = img.src;
+                            // Convert blob URLs to base64
+                            if (imageUrl.startsWith("blob:")) {
+                              imageUrl = await blobUrlToBase64(imageUrl);
+                            }
+                            if (imageUrl) {
+                              messages.push({
+                                role: "user",
+                                type: "image",
+                                content: { imageUrl },
+                              });
+                            }
+                          }
+                        } else {
+                          messages.push({
+                            role: "user",
+                            type: "text",
+                            content:
+                              userMsg.querySelector(".text-sm").textContent,
+                          });
+                        }
+                      }
+                      if (aiMsg) {
+                        const storedResponse = sessionStorage.getItem(
+                          `response_${aiMsg.dataset.responseId}`
+                        );
+                        if (storedResponse) {
+                          messages.push({
+                            role: "assistant",
+                            type: "text",
+                            content: JSON.parse(storedResponse).code,
+                          });
+                        }
+                      }
+                      return messages;
+                    })
+                  ).then((msgs) => msgs.flat());
 
-                // Optimize history before sending
-                const optimizedHistory = optimizeHistory(historyMessages);
+                  // Optimize history before sending
+                  const optimizedHistory = optimizeHistory(historyMessages);
 
-                // Create FormData and append the file and history
-                const formData = new FormData();
-                formData.append("image", this.files[0]);
-                formData.append("history", JSON.stringify(optimizedHistory));
+                  // Create FormData and append the file and history
+                  const formData = new FormData();
+                  formData.append("image", this.files[0]);
+                  formData.append("history", JSON.stringify(optimizedHistory));
 
-                try {
                   // Make API request
                   const response = await fetch(
                     "http://localhost:3000/api/generate",
@@ -1372,26 +1408,26 @@
 
                   // Also enable input when showing historical responses
                   showHistoricalResponse(responseId);
-                } catch (error) {
-                  console.error("Error:", error);
-                  const loadingResponse = messageElement.querySelector(
-                    "#ai-response-loading"
-                  );
-                  loadingResponse.innerHTML = `
-                    <div class="bg-gray-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
-                      <p class="text-sm">Sorry, there was an error generating the UI code.</p>
-                    </div>
-                  `;
+                }.bind(this);
+                reader.readAsDataURL(this.files[0]);
+              } catch (error) {
+                console.error("Error:", error);
+                const loadingResponse = messageElement.querySelector(
+                  "#ai-response-loading"
+                );
+                loadingResponse.innerHTML = `
+                  <div class="bg-gray-500/50 backdrop-blur-sm text-white rounded-lg py-1.5 px-3 max-w-[80%]">
+                    <p class="text-sm">Sorry, there was an error generating the UI code.</p>
+                  </div>
+                `;
 
-                  // Re-enable the code editor and buttons
-                  codeEditor.disabled = false;
-                  document.getElementById("applyChanges").disabled = false;
-                  document.getElementById("resetCode").disabled = false;
-                  document.getElementById("copyButton").disabled = false;
-                  document.getElementById("newTabButton").disabled = false;
-                }
-              }.bind(this);
-              reader.readAsDataURL(this.files[0]);
+                // Re-enable the code editor and buttons
+                codeEditor.disabled = false;
+                document.getElementById("applyChanges").disabled = false;
+                document.getElementById("resetCode").disabled = false;
+                document.getElementById("copyButton").disabled = false;
+                document.getElementById("newTabButton").disabled = false;
+              }
             }
           });
 
@@ -1688,14 +1724,16 @@
           const messageInput = document.getElementById("messageInput");
           const sendButton = document.getElementById("sendButton");
           const newImageButton = document.getElementById("newImageButton");
+          const newFileInput = document.getElementById("newFileInput");
 
           messageInput.disabled = true;
-          messageInput.placeholder = "Please wait ...";
+          messageInput.placeholder = "Please wait...";
           sendButton.disabled = true;
           sendButton.classList.add("opacity-50", "cursor-not-allowed");
 
-          // Disable new image button
+          // Disable new image button and file input
           newImageButton.disabled = true;
+          newFileInput.disabled = true;
           newImageButton.classList.add("opacity-50", "cursor-not-allowed");
         }
 
@@ -1703,14 +1741,16 @@
           const messageInput = document.getElementById("messageInput");
           const sendButton = document.getElementById("sendButton");
           const newImageButton = document.getElementById("newImageButton");
+          const newFileInput = document.getElementById("newFileInput");
 
           messageInput.disabled = false;
           messageInput.placeholder = "Type your message here...";
           sendButton.disabled = false;
           sendButton.classList.remove("opacity-50", "cursor-not-allowed");
 
-          // Enable new image button
+          // Enable new image button and file input
           newImageButton.disabled = false;
+          newFileInput.disabled = false;
           newImageButton.classList.remove("opacity-50", "cursor-not-allowed");
         }
 
@@ -1718,9 +1758,6 @@
         document
           .getElementById("generateFromPrompt")
           .addEventListener("click", async function () {
-            // Clear session storage when starting fresh
-            sessionStorage.clear();
-
             const uiDescription = document
               .getElementById("uiDescription")
               .value.trim();
@@ -1730,34 +1767,36 @@
               return;
             }
 
-            // Clear any existing content
-            const historyDiv = document.getElementById("imageHistory");
-            historyDiv.innerHTML = "";
-
-            // Clear code editor and preview
-            const codeEditor = document.getElementById("codeEditor");
-            codeEditor.value = "";
-            const codeElement = document.querySelector("#codeContent code");
-            codeElement.textContent = "";
-
-            // Clear preview iframe
-            const previewContent = document.getElementById("previewContent");
-            previewContent.innerHTML = "";
-
-            // Show chat interface and hide upload container
-            document.getElementById("chatInterface").classList.remove("hidden");
-            document.getElementById("imageUpload").classList.add("hidden");
-            document.getElementById("contentSection").classList.add("hidden");
-
-            // Show loading state in code view
-            codeElement.innerHTML = loadingAnimation;
-            codeContent.classList.remove("hidden");
-            previewContent.classList.add("hidden");
-
             // Disable input while generating
             disableInput();
 
             try {
+              // Clear any existing content
+              const historyDiv = document.getElementById("imageHistory");
+              historyDiv.innerHTML = "";
+
+              // Clear code editor and preview
+              const codeEditor = document.getElementById("codeEditor");
+              codeEditor.value = "";
+              const codeElement = document.querySelector("#codeContent code");
+              codeElement.textContent = "";
+
+              // Clear preview iframe
+              const previewContent = document.getElementById("previewContent");
+              previewContent.innerHTML = "";
+
+              // Show chat interface and hide upload container
+              document
+                .getElementById("chatInterface")
+                .classList.remove("hidden");
+              document.getElementById("imageUpload").classList.add("hidden");
+              document.getElementById("contentSection").classList.add("hidden");
+
+              // Show loading state in code view
+              codeElement.innerHTML = loadingAnimation;
+              codeContent.classList.remove("hidden");
+              previewContent.classList.add("hidden");
+
               // Add to chat history immediately
               const messageElement = document.createElement("div");
               messageElement.innerHTML = `
@@ -1965,104 +2004,104 @@
           console.log("Regenerate clicked for responseId:", responseId);
           event.stopPropagation(); // Prevent triggering the parent onclick
 
-          // Find the message element and its history up to this point
-          const historyDiv = document.getElementById("imageHistory");
-          const allMessages = Array.from(historyDiv.children);
-          console.log("All messages:", allMessages);
-
-          const currentMessageIndex = allMessages.findIndex((el) =>
-            el.querySelector(`[data-response-id="${responseId}"]`)
-          );
-          console.log("Current message index:", currentMessageIndex);
-
-          if (currentMessageIndex === -1) {
-            console.error("Message not found");
-            return;
-          }
-
-          // Get history up to this point
-          const historyToKeep = allMessages.slice(0, currentMessageIndex + 1);
-          console.log("History to keep:", historyToKeep);
-
-          const historyMessages = [];
-
-          // Build history array
-          for (const el of historyToKeep) {
-            const userMsg = el.querySelector('[data-role="user"]');
-            const aiMsg = el.querySelector('[data-role="assistant"]');
-
-            if (userMsg) {
-              const type = userMsg.dataset.type || "text";
-              console.log("User message type:", type);
-
-              if (type === "image") {
-                const img = userMsg.querySelector("img");
-                if (img) {
-                  historyMessages.push({
-                    role: "user",
-                    type: "image",
-                    content: { imageUrl: img.src },
-                  });
-                }
-              } else {
-                const textContent = userMsg.querySelector("p")?.textContent;
-                if (textContent) {
-                  historyMessages.push({
-                    role: "user",
-                    type: "text",
-                    content: textContent,
-                  });
-                }
-              }
-            }
-
-            if (aiMsg) {
-              const storedResponse = sessionStorage.getItem(
-                `response_${aiMsg.dataset.responseId}`
-              );
-              if (storedResponse) {
-                historyMessages.push({
-                  role: "assistant",
-                  type: "text",
-                  content: JSON.parse(storedResponse).code,
-                });
-              }
-            }
-          }
-
-          console.log("History messages:", historyMessages);
-
-          // Get the last user message to regenerate
-          const lastUserMessage = historyMessages
-            .filter((msg) => msg.role === "user")
-            .pop();
-          console.log("Last user message:", lastUserMessage);
-
-          if (!lastUserMessage) {
-            console.error("No user message found to regenerate");
-            return;
-          }
-
-          // Show loading state
-          const aiResponseElement = document.querySelector(
-            `[data-response-id="${responseId}"]`
-          );
-          if (aiResponseElement) {
-            aiResponseElement.innerHTML = `
-              <div class="flex items-center gap-2 p-2">
-                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="text-sm">Regenerating response...</p>
-              </div>
-            `;
-          }
-
           // Disable input while regenerating
           disableInput();
 
           try {
+            // Find the message element and its history up to this point
+            const historyDiv = document.getElementById("imageHistory");
+            const allMessages = Array.from(historyDiv.children);
+            console.log("All messages:", allMessages);
+
+            const currentMessageIndex = allMessages.findIndex((el) =>
+              el.querySelector(`[data-response-id="${responseId}"]`)
+            );
+            console.log("Current message index:", currentMessageIndex);
+
+            if (currentMessageIndex === -1) {
+              console.error("Message not found");
+              return;
+            }
+
+            // Get history up to this point
+            const historyToKeep = allMessages.slice(0, currentMessageIndex + 1);
+            console.log("History to keep:", historyToKeep);
+
+            const historyMessages = [];
+
+            // Build history array
+            for (const el of historyToKeep) {
+              const userMsg = el.querySelector('[data-role="user"]');
+              const aiMsg = el.querySelector('[data-role="assistant"]');
+
+              if (userMsg) {
+                const type = userMsg.dataset.type || "text";
+                console.log("User message type:", type);
+
+                if (type === "image") {
+                  const img = userMsg.querySelector("img");
+                  if (img) {
+                    historyMessages.push({
+                      role: "user",
+                      type: "image",
+                      content: { imageUrl: img.src },
+                    });
+                  }
+                } else {
+                  const textContent = userMsg.querySelector("p")?.textContent;
+                  if (textContent) {
+                    historyMessages.push({
+                      role: "user",
+                      type: "text",
+                      content: textContent,
+                    });
+                  }
+                }
+              }
+
+              if (aiMsg) {
+                const storedResponse = sessionStorage.getItem(
+                  `response_${aiMsg.dataset.responseId}`
+                );
+                if (storedResponse) {
+                  historyMessages.push({
+                    role: "assistant",
+                    type: "text",
+                    content: JSON.parse(storedResponse).code,
+                  });
+                }
+              }
+            }
+
+            console.log("History messages:", historyMessages);
+
+            // Get the last user message to regenerate
+            const lastUserMessage = historyMessages
+              .filter((msg) => msg.role === "user")
+              .pop();
+            console.log("Last user message:", lastUserMessage);
+
+            if (!lastUserMessage) {
+              console.error("No user message found to regenerate");
+              return;
+            }
+
+            // Show loading state
+            const aiResponseElement = document.querySelector(
+              `[data-response-id="${responseId}"]`
+            );
+            if (aiResponseElement) {
+              aiResponseElement.innerHTML = `
+                <div class="flex items-center gap-2 p-2">
+                  <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p class="text-sm">Regenerating response...</p>
+                </div>
+              `;
+            }
+
             let response;
             console.log(
               "Preparing to send request for type:",
