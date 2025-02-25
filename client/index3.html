@@ -2239,6 +2239,114 @@
             enableInput();
           }
         };
+
+        // Add this function to check and sync button states with content visibility
+        function syncButtonStates() {
+          const previewButton = document.getElementById("previewButton");
+          const codeButton = document.getElementById("codeButton");
+          const previewContent = document.getElementById("previewContent");
+          const codeContent = document.getElementById("codeContent");
+
+          // Check which content is actually visible
+          const isPreviewVisible = !previewContent.classList.contains("hidden");
+          const isCodeVisible = !codeContent.classList.contains("hidden");
+
+          // Update button states to match content visibility
+          if (isCodeVisible) {
+            // Code is visible, update buttons accordingly
+            previewButton.classList.remove(
+              "bg-blue-600",
+              "hover:bg-blue-700",
+              "text-white"
+            );
+            previewButton.classList.add(
+              "bg-gray-700",
+              "hover:bg-gray-600",
+              "text-gray-300"
+            );
+            previewButton.dataset.active = "false";
+
+            codeButton.classList.add(
+              "bg-blue-600",
+              "hover:bg-blue-700",
+              "text-white"
+            );
+            codeButton.classList.remove(
+              "bg-gray-700",
+              "hover:bg-gray-600",
+              "text-gray-300"
+            );
+            codeButton.dataset.active = "true";
+          } else if (isPreviewVisible) {
+            // Preview is visible, update buttons accordingly
+            previewButton.classList.add(
+              "bg-blue-600",
+              "hover:bg-blue-700",
+              "text-white"
+            );
+            previewButton.classList.remove(
+              "bg-gray-700",
+              "hover:bg-gray-600",
+              "text-gray-300"
+            );
+            previewButton.dataset.active = "true";
+
+            codeButton.classList.remove(
+              "bg-blue-600",
+              "hover:bg-blue-700",
+              "text-white"
+            );
+            codeButton.classList.add(
+              "bg-gray-700",
+              "hover:bg-gray-600",
+              "text-gray-300"
+            );
+            codeButton.dataset.active = "false";
+          }
+        }
+
+        // Update the preview/code toggle event listeners
+        document
+          .getElementById("previewButton")
+          .addEventListener("click", function () {
+            const previewContent = document.getElementById("previewContent");
+            const codeContent = document.getElementById("codeContent");
+
+            previewContent.classList.remove("hidden");
+            codeContent.classList.add("hidden");
+
+            syncButtonStates();
+          });
+
+        document
+          .getElementById("codeButton")
+          .addEventListener("click", function () {
+            const previewContent = document.getElementById("previewContent");
+            const codeContent = document.getElementById("codeContent");
+
+            previewContent.classList.add("hidden");
+            codeContent.classList.remove("hidden");
+
+            syncButtonStates();
+          });
+
+        // Update switchToCodeView function to use syncButtonStates
+        function switchToCodeView() {
+          const previewContent = document.getElementById("previewContent");
+          const codeContent = document.getElementById("codeContent");
+
+          // Update content visibility
+          previewContent.classList.add("hidden");
+          codeContent.classList.remove("hidden");
+
+          // Sync button states with content visibility
+          syncButtonStates();
+        }
+
+        // Add syncButtonStates call after any content updates
+        document.addEventListener("DOMContentLoaded", function () {
+          syncButtonStates();
+        });
       </script>
 
       <style>
