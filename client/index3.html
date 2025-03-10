@@ -275,7 +275,9 @@
               class="w-1/4 bg-custom-dark rounded-lg shadow-lg p-4 h-[calc(100vh-7rem)] flex flex-col border border-gray-800/30"
             >
               <div class="flex justify-between items-center mb-3">
-                <h3 class="text-md font-semibold !text-[25px] !text-gray-100">Chats</h3>
+                <h3 class="text-md font-semibold !text-[25px] !text-gray-100">
+                  Chats
+                </h3>
                 <button
                   id="newChatButton"
                   class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
@@ -378,7 +380,9 @@
               >
                 <div class="flex justify-between mb-2 items-center">
                   <div class="">
-                    <h3 class="text-md font-semibold !text-[25px] mb-4 !text-gray-100">
+                    <h3
+                      class="text-md font-semibold !text-[25px] mb-4 !text-gray-100"
+                    >
                       Output
                     </h3>
                   </div>
@@ -762,16 +766,19 @@
             // Get the uploaded image
             const fileInput = document.getElementById("fileInput");
             if (fileInput.files && fileInput.files[0]) {
-              // Add to chat history immediately
+              // Convert the file to base64 before adding to history
+              const base64Data = await convertBlobToBase64(
+                URL.createObjectURL(fileInput.files[0])
+              );
+
+              // Add to chat history with base64 data
               const historyDiv = document.getElementById("imageHistory");
               const messageElement = document.createElement("div");
               messageElement.innerHTML = `
                 <div class="flex flex-col space-y-2">
                   <div class="flex mb-3 justify-end">
                     <div class="bg-gray-500 text-white rounded-lg py-2 px-4 max-w-[80%]" data-role="user" data-type="image">
-                      <img src="${URL.createObjectURL(
-                        fileInput.files[0]
-                      )}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
+                      <img src="${base64Data}" alt="Uploaded image" class="max-h-48 rounded-lg mb-2">
                       <p class="text-sm">Image uploaded</p>
                     </div>
                   </div>
@@ -820,7 +827,7 @@
                 // Store response in session storage
                 storeInSession(responseId, {
                   code: data.response,
-                  imageUrl: URL.createObjectURL(fileInput.files[0]),
+                  imageUrl: base64Data,
                   timestamp: new Date().toISOString(),
                 });
 
@@ -1036,7 +1043,7 @@
                         let imageUrl = img.src;
                         // Convert blob URLs to base64
                         if (imageUrl.startsWith("blob:")) {
-                          imageUrl = await blobUrlToBase64(imageUrl);
+                          imageUrl = await convertBlobToBase64(imageUrl);
                         }
                         if (imageUrl) {
                           messages.push({
@@ -1168,7 +1175,7 @@
         }
 
         // Add this helper function
-        async function blobUrlToBase64(blobUrl) {
+        async function convertBlobToBase64(blobUrl) {
           try {
             const response = await fetch(blobUrl);
             const blob = await response.blob();
@@ -1191,7 +1198,7 @@
           iframe.style.width = "100%";
           iframe.style.height = "550px";
           iframe.style.border = "none";
-          iframe.style.backgroundColor = "black";
+          iframe.style.backgroundColor = "white";
           previewContent.innerHTML = "";
           previewContent.appendChild(iframe);
 
@@ -1287,7 +1294,7 @@
                             let imageUrl = img.src;
                             // Convert blob URLs to base64
                             if (imageUrl.startsWith("blob:")) {
-                              imageUrl = await blobUrlToBase64(imageUrl);
+                              imageUrl = await convertBlobToBase64(imageUrl);
                             }
                             if (imageUrl) {
                               messages.push({

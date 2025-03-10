@@ -80,7 +80,11 @@ Requirements:
 - Include all necessary styling inline or in a style tag
 - Make it visually appealing and professional
 - Ensure mobile responsiveness
-- Use modern CSS features and flexbox/grid layouts where appropriate
+- Use modern CSS features and flexbox/grid layouts
+- Maintain consistent spacing and alignment
+- Ensure cross-browser compatibility
+- Include hover states and transitions where appropriate
+- Follow modern web development best practices
 
 Please provide the complete code wrapped in \`\`\`html code blocks.`;
 
@@ -88,8 +92,21 @@ Please provide the complete code wrapped in \`\`\`html code blocks.`;
     }
     // Case 1: Initial image upload (no history)
     else if (req.file && conversationHistory.length === 0) {
-      prompt =
-        "Create responsive HTML + CSS code that matches this UI image. Include all necessary styling and layout. Make it fully functional and visually identical to the provided image.";
+      prompt = `Create responsive HTML + CSS code that matches this UI image.
+
+Requirements:
+- Implement pixel-perfect recreation of the provided UI design
+- Create modern, responsive HTML and CSS code
+- Use semantic HTML5 elements
+- Include all necessary styling inline or in a style tag
+- Make it visually appealing and professional
+- Ensure mobile responsiveness
+- Use modern CSS features and flexbox/grid layouts
+- Maintain consistent spacing and alignment
+- Ensure cross-browser compatibility
+- Include hover states and transitions where appropriate
+
+Please provide the complete code wrapped in \`\`\`html code blocks.`;
 
       // Add image to parts
       const imageBuffer = await fs.readFile(req.file.path);
