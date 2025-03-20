@@ -10,8 +10,8 @@ const https = require("https");
 const axios = require("axios");
 
 const app = express();
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ limit: "25mb", extended: true }));
 app.use(cors());
 
 // Configure multer for handling file uploads
@@ -28,6 +28,7 @@ const upload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
+    fieldSize: 25 * 1024 * 1024, // 25MB limit for fields
   },
 });
 
