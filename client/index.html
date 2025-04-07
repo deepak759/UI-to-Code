@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
+  </head>
+  <body>
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
       rel="stylesheet"
@@ -13,11 +13,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
     <style>
-    
       #messageInput {
         border-radius: 10px !important;
       }
-    
+
       /* Add these styles for better code display */
       pre {
         background: #1f2937 !important;
@@ -44,13 +43,10 @@
         transform: translateY(0px);
       }
 
-      /* Update toast styling     */   
+      /* Update toast styling     */
       .fixed {
         animation: slideIn 0.3s ease forwards;
         backdrop-filter: blur(8px);
-      }
-      *{
-        box-sizing: unset !important;
       }
     </style>
     <div style="background-color: #101217">
@@ -230,7 +226,7 @@
         <div class="hidden" id="chatInterface">
           <div class="flex gap-6">
             <div
-              class="w-1/4 bg-custom-dark rounded-lg shadow-lg p-4  flex flex-col border border-gray-800/30"
+              class="w-1/4 bg-custom-dark rounded-lg shadow-lg p-4 flex flex-col border border-gray-800/30"
             >
               <div class="flex justify-between items-center mb-3">
                 <h3 class="text-md font-semibold !text-[25px] !text-gray-100">
@@ -334,7 +330,7 @@
 
             <div class="w-3/4 space-y-3">
               <div
-                class="bg-custom-dark rounded-lg shadow-lg p-6  mb-2 overflow-y-auto scrollbar-custom border border-gray-800/30"
+                class="bg-custom-dark rounded-lg shadow-lg p-6 mb-2 overflow-y-auto scrollbar-custom border border-gray-800/30"
               >
                 <div class="flex justify-between mb-2 items-center">
                   <div class="">
@@ -389,7 +385,7 @@
                 </div>
                 <div
                   id="outputContent"
-                  class="prose prose-invert max-w-none  overflow-y-auto scrollbar-custom"
+                  class="prose prose-invert max-w-none overflow-y-auto scrollbar-custom"
                 >
                   <div id="previewContent" class="hidden">
                     <!-- Preview iframe will be inserted here -->
@@ -1154,7 +1150,7 @@
           const previewContent = document.getElementById("previewContent");
           const iframe = document.createElement("iframe");
           iframe.style.width = "100%";
-          iframe.style.height = "550px";
+          iframe.style.height = "600px";
           iframe.style.border = "none";
           iframe.style.backgroundColor = "white";
           previewContent.innerHTML = "";
@@ -2100,23 +2096,29 @@
               );
 
               console.log("Sending image request");
-              response = await fetch("https://ui-to-code-1.onrender.com/api/generate", {
-                method: "POST",
-                body: formData,
-              });
+              response = await fetch(
+                "https://ui-to-code-1.onrender.com/api/generate",
+                {
+                  method: "POST",
+                  body: formData,
+                }
+              );
             } else {
               // Handle text message regeneration
               console.log("Sending text request:", lastUserMessage.content);
-              response = await fetch("https://ui-to-code-1.onrender.com/api/generate", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  message: lastUserMessage.content,
-                  history: JSON.stringify(historyMessages.slice(0, -1)),
-                }),
-              });
+              response = await fetch(
+                "https://ui-to-code-1.onrender.com/api/generate",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    message: lastUserMessage.content,
+                    history: JSON.stringify(historyMessages.slice(0, -1)),
+                  }),
+                }
+              );
             }
 
             console.log("Got response:", response);
@@ -2422,7 +2424,62 @@
           transform: translateY(100%);
           transition: all 0.3s ease;
         }
+
+        /* Add/update these styles to fix the height issues */
+        body {
+          margin: 0;
+          padding: 0;
+          min-height: 100vh;
+          background-color: #101217;
+        }
+
+        /* Update chat interface container */
+        #chatInterface {
+          height: calc(100vh - 2rem); /* Subtract padding */
+          padding-bottom: 1rem;
+        }
+
+        /* Update the chat container heights */
+        .w-1/4.bg-custom-dark {
+          height: calc(100vh - 2rem);
+          max-height: calc(100vh - 2rem);
+        }
+
+        /* Update the output container */
+        .w-3/4.space-y-3 {
+          height: calc(100vh - 2rem);
+        }
+
+        /* Update the main content area */
+        .bg-custom-dark.rounded-lg.shadow-lg.p-6.mb-2.overflow-y-auto {
+          height: calc(100vh - 2rem);
+          max-height: calc(100vh - 2rem);
+        }
+
+        /* Update the image history container */
+        #imageHistory {
+         
+          overflow-y: auto;
+        }
+
+        /* Update the code editor container */
+        #outputContent {
+          height: 600px !important;/* Account for header and buttons */
+         
+        }
+
+        /* Update the code editor */
+        #codeEditor {
+         height: 600px !important;
+          /* max-height: calc(100vh - 15rem) !important; */
+        }
+
+        /* Update preview iframe */
+        #previewContent iframe {
+          height: 100vh;
+          /* max-height: calc(100vh - 15rem) !important; */
+        }
       </style>
     </div>
-</body>
+  </body>
 </html>
