@@ -2443,6 +2443,8 @@
         .w-1/4.bg-custom-dark {
           height: calc(100vh - 2rem);
           max-height: calc(100vh - 2rem);
+          display: flex;
+          flex-direction: column;
         }
 
         /* Update the output container */
@@ -2458,26 +2460,26 @@
 
         /* Update the image history container */
         #imageHistory {
-         
+          flex: 1;
           overflow-y: auto;
+          max-height: calc(100vh - 12rem); /* Fixed height for chat history */
+          min-height: 200px; /* Minimum height */
+          padding-right: 0.5rem; /* Add some padding for the scrollbar */
         }
 
         /* Update the code editor container */
         #outputContent {
-          height: 600px !important;/* Account for header and buttons */
-         
+          height: 600px !important;
         }
 
         /* Update the code editor */
         #codeEditor {
-         height: 600px !important;
-          /* max-height: calc(100vh - 15rem) !important; */
+          height: 600px !important;
         }
 
         /* Update preview iframe */
         #previewContent iframe {
           height: 100vh;
-          /* max-height: calc(100vh - 15rem) !important; */
         }
       </style>
     </div>
